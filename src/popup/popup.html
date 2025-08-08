@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeetCode Code Analyzer</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="popup-container">
+        <div class="popup-header">
+            <div class="popup-title">
+                <span class="popup-icon">🧠</span>
+                <span>LeetCode Analyzer</span>
+            </div>
+            <div class="popup-version">v1.0.0</div>
+        </div>
+
+        <div class="popup-content">
+            <!-- API Status Section -->
+            <div class="status-section">
+                <div class="status-item">
+                    <span class="status-label">API Status:</span>
+                    <span class="status-indicator" id="api-status">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Checking...</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="actions-section">
+                <h3>Quick Actions</h3>
+                
+                <button class="action-btn primary" id="open-current-page">
+                    <span class="btn-icon">🔍</span>
+                    <span>Analyze Current Problem</span>
+                </button>
+
+                <button class="action-btn secondary" id="open-settings">
+                    <span class="btn-icon">⚙️</span>
+                    <span>Settings & API Key</span>
+                </button>
+
+                <button class="action-btn secondary" id="view-help">
+                    <span class="btn-icon">❓</span>
+                    <span>Help & Documentation</span>
+                </button>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="activity-section">
+                <h3>Recent Activity</h3>
+                <div class="activity-list" id="recent-activity">
+                    <div class="activity-item">
+                        <span class="activity-icon">📊</span>
+                        <div class="activity-content">
+                            <div class="activity-title">No recent activity</div>
+                            <div class="activity-time">Start analyzing problems to see history</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="stats-section">
+                <h3>Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number" id="problems-analyzed">0</div>
+                        <div class="stat-label">Problems Analyzed</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="errors-found">0</div>
+                        <div class="stat-label">Errors Found</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="solutions-generated">0</div>
+                        <div class="stat-label">Solutions Generated</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="optimizations-suggested">0</div>
+                        <div class="stat-label">Optimizations</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="popup-footer">
+            <div class="footer-links">
+                <a href="#" id="privacy-link">Privacy</a>
+                <a href="#" id="support-link">Support</a>
+                <a href="#" id="feedback-link">Feedback</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

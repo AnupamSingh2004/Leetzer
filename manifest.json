@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "LeetCode Code Analyzer",
+  "version": "1.0.0",
+  "description": "AI-powered code analysis, error detection, and optimization suggestions for LeetCode problems",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://leetcode.com/*",
+    "https://generativelanguage.googleapis.com/*"
+  ],
+  "background": {
+    "service_worker": "dist/background/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://leetcode.com/problems/*"],
+      "js": ["dist/utils/helpers.js", "dist/utils/codeParser.js", "dist/utils/geminiClient.js", "dist/content/content.js"],
+      "css": ["content/content.css"],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_popup": "dist/popup/popup.html",
+    "default_title": "LeetCode Code Analyzer",
+    "default_icon": {
+      "16": "assets/icons/icon16.png",
+      "32": "assets/icons/icon32.png",
+      "48": "assets/icons/icon48.png",
+      "128": "assets/icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "assets/icons/icon16.png",
+    "32": "assets/icons/icon32.png",
+    "48": "assets/icons/icon48.png",
+    "128": "assets/icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["dist/setup/apiSetup.html"],
+      "matches": ["https://leetcode.com/*"]
+    }
+  ]
+}

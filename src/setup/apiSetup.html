@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeetCode Code Analyzer - API Setup</title>
+    <link rel="stylesheet" href="apiSetup.css">
+</head>
+<body>
+    <div class="setup-container">
+        <div class="setup-header">
+            <div class="setup-title">
+                <span class="setup-icon">🔧</span>
+                <h1>LeetCode Analyzer Setup</h1>
+            </div>
+            <p class="setup-subtitle">Configure your Gemini API key to start analyzing code</p>
+        </div>
+
+        <div class="setup-content">
+            <!-- Current Status -->
+            <div class="status-card">
+                <div class="status-header">
+                    <h2>Current Status</h2>
+                    <div class="status-indicator" id="current-status">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Checking...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Key Configuration -->
+            <div class="config-card">
+                <h2>Gemini API Configuration</h2>
+                
+                <div class="input-group">
+                    <label for="api-key-input">API Key</label>
+                    <div class="input-container">
+                        <input 
+                            type="password" 
+                            id="api-key-input" 
+                            placeholder="Enter your Gemini API key (AIza...)"
+                            class="api-key-input"
+                        >
+                        <button type="button" id="toggle-visibility" class="toggle-btn" title="Toggle visibility">
+                            👁️
+                        </button>
+                    </div>
+                    <div class="input-help">
+                        Your API key is stored securely and only used for analysis requests
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button id="test-api-key" class="btn btn-secondary" disabled>
+                        <span class="btn-text">Test Connection</span>
+                        <span class="btn-loader" style="display: none;">🔄</span>
+                    </button>
+                    <button id="save-api-key" class="btn btn-primary" disabled>
+                        <span class="btn-text">Save & Continue</span>
+                        <span class="btn-loader" style="display: none;">🔄</span>
+                    </button>
+                </div>
+
+                <div id="validation-result" class="validation-result"></div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="instructions-card">
+                <h2>How to get your Gemini API Key</h2>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>Visit Google AI Studio</h3>
+                            <p>Go to <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener">Google AI Studio</a> and sign in with your Google account.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>Create API Key</h3>
+                            <p>Click "Create API Key" and select a Google Cloud project (or create a new one).</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>Copy Your Key</h3>
+                            <p>Copy the generated API key (starts with "AIza") and paste it in the field above.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h3>Test & Save</h3>
+                            <p>Click "Test Connection" to verify your key works, then "Save & Continue".</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div class="settings-card">
+                <h2>Extension Settings</h2>
+                
+                <div class="setting-group">
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <label for="theme-select">Theme</label>
+                            <p>Choose your preferred theme</p>
+                        </div>
+                        <select id="theme-select" class="setting-select">
+                            <option value="auto">Auto (Match LeetCode)</option>
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <label for="auto-analyze">Auto-analyze code</label>
+                            <p>Automatically analyze code as you type</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="auto-analyze" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <label for="show-notifications">Show notifications</label>
+                            <p>Display notifications for analysis results</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="show-notifications" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <label for="analysis-delay">Analysis delay</label>
+                            <p>Delay before auto-analysis starts (seconds)</p>
+                        </div>
+                        <select id="analysis-delay" class="setting-select">
+                            <option value="1000">1 second</option>
+                            <option value="2000" selected>2 seconds</option>
+                            <option value="3000">3 seconds</option>
+                            <option value="5000">5 seconds</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button id="save-settings" class="btn btn-secondary">Save Settings</button>
+            </div>
+        </div>
+
+        <div class="setup-footer">
+            <div class="footer-links">
+                <a href="#" id="privacy-link">Privacy Policy</a>
+                <a href="#" id="help-link">Help & Documentation</a>
+                <a href="#" id="feedback-link">Send Feedback</a>
+            </div>
+            <div class="footer-note">
+                <p>Your API key is stored locally and encrypted. We never send your data to external servers except for analysis requests to Google's Gemini API.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="apiSetup.js"></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "name": "leetcode-code-analyzer",
+  "version": "1.0.0",
+  "description": "AI-powered code analysis, error detection, and optimization suggestions for LeetCode problems",
+  "scripts": {
+    "build": "tsc && npm run copy-assets",
+    "watch": "tsc --watch",
+    "copy-assets": "npm run copy-html && npm run copy-css && npm run copy-icons",
+    "copy-html": "mkdir -p dist/popup dist/setup && cp src/popup/*.html dist/popup/ && cp src/setup/*.html dist/setup/",
+    "copy-css": "mkdir -p dist/popup dist/content dist/setup && cp src/popup/*.css dist/popup/ && cp src/content/*.css dist/content/ && cp src/setup/*.css dist/setup/",
+    "copy-icons": "mkdir -p dist && cp -r assets/ dist/",
+    "clean": "rm -rf dist",
+    "dev": "npm run clean && npm run build && npm run watch",
+    "package": "npm run clean && npm run build && zip -r leetcode-analyzer.zip dist/ assets/ manifest.json README.md"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.268",
+    "typescript": "^5.1.6"
+  },
+  "private": true
+}
