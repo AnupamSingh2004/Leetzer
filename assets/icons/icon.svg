@@ -1,0 +1,31 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="60" fill="#3B82F6" stroke="#1E40AF" stroke-width="2"/>
+  
+  <!-- Code brackets -->
+  <path d="M35 45L25 55L35 65" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M93 45L103 55L93 65" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  
+  <!-- Binary code pattern -->
+  <circle cx="50" cy="40" r="2" fill="white"/>
+  <circle cx="58" cy="40" r="2" fill="white"/>
+  <circle cx="70" cy="40" r="2" fill="white"/>
+  <circle cx="78" cy="40" r="2" fill="white"/>
+  
+  <!-- Magnifying glass for analysis -->
+  <circle cx="70" cy="75" r="12" stroke="white" stroke-width="3" fill="none"/>
+  <path d="M80 85L88 93" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- AI/Analysis indicator -->
+  <path d="M45 75L55 85L45 95" stroke="#10B981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  
+  <!-- Small code elements -->
+  <rect x="40" y="52" width="8" height="2" rx="1" fill="white"/>
+  <rect x="52" y="52" width="12" height="2" rx="1" fill="white"/>
+  <rect x="40" y="57" width="6" height="2" rx="1" fill="white"/>
+  <rect x="50" y="57" width="10" height="2" rx="1" fill="white"/>
+  
+  <!-- LeetCode-style difficulty indicator -->
+  <circle cx="64" cy="25" r="8" fill="#10B981"/>
+  <path d="M60 25L62.5 27.5L68 22" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

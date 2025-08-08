@@ -17,5 +17,8 @@
     "@types/chrome": "^0.0.268",
     "typescript": "^5.1.6"
   },
-  "private": true
+  "private": true,
+  "dependencies": {
+    "sharp": "^0.34.3"
+  }
 }
