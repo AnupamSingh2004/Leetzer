@@ -11,9 +11,6 @@ import {
   RateLimitInfo
 } from '../types/index.js';
 
-/**
- * Handles communication with Google Gemini API
- */
 export class GeminiClient {
   private static readonly API_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
   private static readonly MAX_RETRIES = 3;
@@ -26,9 +23,6 @@ export class GeminiClient {
     resetTime: Date.now() + 60000
   };
 
-  /**
-   * Validates if the API key is properly formatted
-   */
   static isValidApiKeyFormat(apiKey: string): boolean {
     // Gemini API keys typically start with 'AIza' and are 39 characters long
     return typeof apiKey === 'string' && 
@@ -36,9 +30,6 @@ export class GeminiClient {
            apiKey.length === 39;
   }
 
-  /**
-   * Tests API key validity by making a simple request
-   */
   static async testApiKey(apiKey: string): Promise<{ isValid: boolean; error?: string }> {
     try {
       if (!this.isValidApiKeyFormat(apiKey)) {
@@ -66,9 +57,6 @@ export class GeminiClient {
     }
   }
 
-  /**
-   * Analyzes code for errors and issues
-   */
   static async analyzeCode(
     apiKey: string, 
     codeInfo: CodeInfo, 
@@ -89,9 +77,6 @@ export class GeminiClient {
     return this.parseAnalysisResponse(response.data);
   }
 
-  /**
-   * Generates solution for the problem
-   */
   static async generateSolution(
     apiKey: string, 
     problemInfo: ProblemInfo, 
@@ -115,9 +100,6 @@ export class GeminiClient {
     return this.parseSolutionResponse(response.data, language);
   }
 
-  /**
-   * Analyzes time and space complexity
-   */
   static async analyzeComplexity(
     apiKey: string, 
     codeInfo: CodeInfo, 
@@ -138,9 +120,6 @@ export class GeminiClient {
     return this.parseComplexityResponse(response.data);
   }
 
-  /**
-   * Provides optimization suggestions
-   */
   static async optimizeCode(
     apiKey: string, 
     codeInfo: CodeInfo, 
@@ -161,9 +140,6 @@ export class GeminiClient {
     return this.parseOptimizationResponse(response.data);
   }
 
-  /**
-   * Makes HTTP request to Gemini API with retry logic
-   */
   private static async makeRequest(apiKey: string, request: GeminiRequest): Promise<GeminiResponse> {
     // Check rate limiting
     if (!this.checkRateLimit()) {
@@ -263,9 +239,6 @@ export class GeminiClient {
     };
   }
 
-  /**
-   * Builds prompt for code analysis
-   */
   private static buildAnalysisPrompt(codeInfo: CodeInfo, problemInfo: ProblemInfo): string {
     return `
 You are an expert LeetCode problem solver and competitive programming mentor. Analyze the following ${codeInfo.language} code for the LeetCode problem "${problemInfo.title}" and provide a detailed LeetCode-specific analysis.
@@ -315,9 +288,6 @@ Focus specifically on:
 Respond only with valid JSON.`;
   }
 
-  /**
-   * Builds prompt for solution generation
-   */
   private static buildSolutionPrompt(problemInfo: ProblemInfo, language: CodeInfo['language']): string {
     return `
 You are an expert LeetCode problem solver. Generate a complete, optimal solution for this LeetCode problem in ${language}.
@@ -351,9 +321,6 @@ Provide a complete, ready-to-submit LeetCode solution.
 Respond only with valid JSON.`;
   }
 
-  /**
-   * Gets the standard LeetCode template for a language
-   */
   private static getLanguageTemplate(language: CodeInfo['language']): string {
     switch (language) {
       case 'cpp':
@@ -379,9 +346,6 @@ public:
     }
   }
 
-  /**
-   * Builds prompt for complexity analysis
-   */
   private static buildComplexityPrompt(codeInfo: CodeInfo, problemInfo: ProblemInfo): string {
     return `
 Analyze the time and space complexity of this ${codeInfo.language} code for the LeetCode problem "${problemInfo.title}". Focus on competitive programming and LeetCode-specific analysis.
@@ -417,9 +381,6 @@ Focus on:
 Respond only with valid JSON.`;
   }
 
-  /**
-   * Builds prompt for optimization suggestions
-   */
   private static buildOptimizationPrompt(codeInfo: CodeInfo, problemInfo: ProblemInfo): string {
     return `
 Analyze this ${codeInfo.language} code for the LeetCode problem "${problemInfo.title}" and suggest LeetCode/DSA-specific optimizations.
@@ -462,9 +423,6 @@ Provide practical, actionable suggestions that will help pass LeetCode test case
 Respond only with valid JSON.`;
   }
 
-  /**
-   * Parses analysis response from Gemini
-   */
   private static parseAnalysisResponse(responseText: string): AnalysisResult {
     try {
       // Try to extract JSON from response if it's wrapped in markdown or extra text
@@ -519,9 +477,6 @@ Respond only with valid JSON.`;
     }
   }
 
-  /**
-   * Parses solution response from Gemini
-   */
   private static parseSolutionResponse(responseText: string, language: CodeInfo['language']): SolutionResult {
     try {
       // Try to extract JSON from response if it's wrapped in markdown or extra text
@@ -571,9 +526,6 @@ Respond only with valid JSON.`;
     }
   }
 
-  /**
-   * Parses complexity response from Gemini
-   */
   private static parseComplexityResponse(responseText: string): ComplexityAnalysis {
     try {
       // Try to extract JSON from response if it's wrapped in markdown or extra text
@@ -636,9 +588,6 @@ Respond only with valid JSON.`;
     }
   }
 
-  /**
-   * Parses optimization response from Gemini
-   */
   private static parseOptimizationResponse(responseText: string): OptimizationSuggestion[] {
     try {
       // Try to extract JSON from response if it's wrapped in markdown or extra text
@@ -705,9 +654,6 @@ Respond only with valid JSON.`;
     }
   }
 
-  /**
-   * Checks if we're within rate limits
-   */
   private static checkRateLimit(): boolean {
     const now = Date.now();
     
@@ -720,16 +666,10 @@ Respond only with valid JSON.`;
     return this.rateLimitInfo.currentRequests < this.rateLimitInfo.requestsPerMinute;
   }
 
-  /**
-   * Updates rate limit counter
-   */
   private static updateRateLimit(): void {
     this.rateLimitInfo.currentRequests++;
   }
 
-  /**
-   * Utility function to delay execution
-   */
   private static delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }

@@ -6,15 +6,9 @@ import {
   TimeoutId 
 } from '../types/index.js';
 
-/**
- * Helper utility functions for the LeetCode Code Analyzer extension
- */
 export class Helpers {
   private static notificationContainer: HTMLElement | null = null;
 
-  /**
-   * Creates a debounced function that delays invoking func until after wait milliseconds
-   */
   static debounce<T extends (...args: any[]) => any>(
     func: T, 
     wait: number
@@ -51,18 +45,12 @@ export class Helpers {
     return debounced;
   }
 
-  /**
-   * Sanitizes HTML input to prevent XSS attacks
-   */
   static sanitizeInput(input: string): string {
     const div = document.createElement('div');
     div.textContent = input;
     return div.innerHTML;
   }
 
-  /**
-   * Shows a notification to the user
-   */
   static showNotification(
     message: string, 
     type: NotificationOptions['type'] = 'info',
@@ -118,9 +106,6 @@ export class Helpers {
     }, duration);
   }
 
-  /**
-   * Creates the notification container if it doesn't exist
-   */
   private static createNotificationContainer(): void {
     this.notificationContainer = document.createElement('div');
     this.notificationContainer.style.cssText = `
@@ -133,9 +118,6 @@ export class Helpers {
     document.body.appendChild(this.notificationContainer);
   }
 
-  /**
-   * Detects the current theme of the LeetCode page
-   */
   static detectTheme(): Theme {
     const isDark = document.documentElement.classList.contains('dark') ||
                    document.body.classList.contains('dark') ||
@@ -144,17 +126,11 @@ export class Helpers {
     return isDark ? 'dark' : 'light';
   }
 
-  /**
-   * Formats complexity notation for display
-   */
   static formatComplexity(complexity: string): string {
     if (!complexity) return 'N/A';
     return complexity.replace(/O\(([^)]+)\)/, 'O($1)');
   }
 
-  /**
-   * Copies text to clipboard with fallback for older browsers
-   */
   static async copyToClipboard(text: string): Promise<void> {
     try {
       await navigator.clipboard.writeText(text);
@@ -181,9 +157,6 @@ export class Helpers {
     }
   }
 
-  /**
-   * Extracts problem information from the current LeetCode page
-   */
   static extractProblemInfo(): ProblemInfo {
     const title = document.querySelector('[data-cy="question-title"]')?.textContent?.trim() ||
                   document.querySelector('h1')?.textContent?.trim() ||
@@ -222,9 +195,6 @@ export class Helpers {
     return { title, difficulty, description, tags };
   }
 
-  /**
-   * Waits for an element to appear in the DOM
-   */
   static waitForElement(selector: string, timeout: number = 5000): Promise<Element> {
     return new Promise((resolve, reject) => {
       const startTime = Date.now();
@@ -248,16 +218,10 @@ export class Helpers {
     });
   }
 
-  /**
-   * Generates a unique ID for DOM elements
-   */
   static generateUniqueId(): string {
     return 'lca_' + Math.random().toString(36).substr(2, 9);
   }
 
-  /**
-   * Escapes HTML while preserving some safe formatting
-   */
   static escapeHtml(text: string): string {
     const map: Record<string, string> = {
       '&': '&amp;',
@@ -269,9 +233,6 @@ export class Helpers {
     return text.replace(/[&<>"']/g, (m) => map[m] || m);
   }
 
-  /**
-   * Formats text with safe HTML markup for better readability
-   */
   static formatTextWithMarkup(text: string): string {
     // First escape dangerous HTML
     let formatted = this.escapeHtml(text);
@@ -292,9 +253,6 @@ export class Helpers {
     return formatted;
   }
 
-  /**
-   * Creates a loading spinner element
-   */
   static createLoadingSpinner(): HTMLElement {
     const spinner = document.createElement('div');
     spinner.className = 'leetcode-analyzer-spinner';
@@ -336,9 +294,6 @@ export class Helpers {
     return spinner;
   }
 
-  /**
-   * Throttles function execution to at most once per interval
-   */
   static throttle<T extends (...args: any[]) => any>(
     func: T, 
     limit: number
@@ -356,9 +311,6 @@ export class Helpers {
     };
   }
 
-  /**
-   * Deep clones an object
-   */
   static deepClone<T>(obj: T): T {
     if (obj === null || typeof obj !== 'object') {
       return obj;

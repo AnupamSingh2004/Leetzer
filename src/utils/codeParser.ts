@@ -1,9 +1,6 @@
 import { CodeInfo, SupportedLanguage, ProblemInfo } from '../types/index.js';
 import { Helpers } from './helpers.js';
 
-/**
- * Handles code extraction and parsing from LeetCode's editor
- */
 export class CodeParser {
   private static readonly LANGUAGE_MAP: Record<string, SupportedLanguage> = {
     'javascript': 'javascript',
@@ -38,19 +35,14 @@ export class CodeParser {
     'button[id*="headlessui-listbox-button"] span'
   ];
 
-  /**
-   * Extracts code content from LeetCode's code editor
-   */
   static extractCodeFromEditor(): string {
     try {
       console.log('Starting code extraction...');
 
-      // Method 1: Try Monaco Editor (most common in current LeetCode)
       const monacoEditor = document.querySelector('.monaco-editor');
       if (monacoEditor) {
         console.log('Found Monaco editor');
         
-        // Try different Monaco selector strategies
         const monacoSelectors = [
           '.view-lines .view-line',
           '.monaco-editor .view-lines .view-line',
@@ -73,7 +65,6 @@ export class CodeParser {
         }
       }
 
-      // Method 2: Try CodeMirror editors and other modern editors
       const codeEditors = [
         '.CodeMirror-code .CodeMirror-line',
         '.cm-content .cm-line', 
@@ -143,10 +134,7 @@ export class CodeParser {
       console.error('Error extracting code from editor:', error);
       return '';
     }
-  }  /**
-   * Detects the programming language being used
-   */
-  static detectProgrammingLanguage(): SupportedLanguage {
+  }  static detectProgrammingLanguage(): SupportedLanguage {
     try {
       // Check data attributes
       for (const selector of this.LANGUAGE_SELECTORS) {
@@ -184,9 +172,6 @@ export class CodeParser {
     }
   }
 
-  /**
-   * Attempts to detect language from code patterns
-   */
   private static detectLanguageFromCode(code: string): SupportedLanguage {
     const patterns: Record<SupportedLanguage, RegExp[]> = {
       python: [
@@ -271,9 +256,6 @@ export class CodeParser {
     return bestMatch;
   }
 
-  /**
-   * Parses code structure and extracts metadata
-   */
   static parseCodeStructure(code: string, language: SupportedLanguage): CodeInfo {
     const lines = code.split('\n');
     const lineCount = lines.length;
@@ -289,9 +271,6 @@ export class CodeParser {
     };
   }
 
-  /**
-   * Performs basic syntax error detection
-   */
   private static detectBasicSyntaxErrors(code: string, language: SupportedLanguage): boolean {
     try {
       switch (language) {
@@ -312,9 +291,6 @@ export class CodeParser {
     }
   }
 
-  /**
-   * Detects basic JavaScript/TypeScript syntax errors
-   */
   private static detectJavaScriptErrors(code: string): boolean {
     // Check for unmatched brackets
     const brackets = { '(': 0, '[': 0, '{': 0 };
@@ -336,9 +312,6 @@ export class CodeParser {
     return Object.values(brackets).some(count => count !== 0);
   }
 
-  /**
-   * Detects basic Python syntax errors
-   */
   private static detectPythonErrors(code: string): boolean {
     const lines = code.split('\n');
     
@@ -370,9 +343,6 @@ export class CodeParser {
     return false;
   }
 
-  /**
-   * Detects basic Java syntax errors
-   */
   private static detectJavaErrors(code: string): boolean {
     // Check for basic Java syntax patterns
     if (!/class\s+\w+/.test(code)) {
@@ -383,9 +353,6 @@ export class CodeParser {
     return this.detectJavaScriptErrors(code);
   }
 
-  /**
-   * Detects basic C++ syntax errors
-   */
   private static detectCppErrors(code: string): boolean {
     // Check for includes
     if (code.includes('cout') && !/#include\s*<iostream>/.test(code)) {
@@ -396,9 +363,6 @@ export class CodeParser {
     return this.detectJavaScriptErrors(code);
   }
 
-  /**
-   * Monitors code changes in the editor
-   */
   static observeCodeChanges(callback: (code: string, language: SupportedLanguage) => void): MutationObserver {
     const debouncedCallback = Helpers.debounce((code: string, language: SupportedLanguage) => {
       if (code.trim().length > 0) {
@@ -428,9 +392,6 @@ export class CodeParser {
     return observer;
   }
 
-  /**
-   * Extracts problem information from the LeetCode page
-   */
   static extractProblemInfo(): ProblemInfo {
     try {
       // Extract problem title
@@ -465,9 +426,6 @@ export class CodeParser {
     }
   }
 
-  /**
-   * Extracts the problem title from various possible selectors
-   */
   private static extractProblemTitle(): string {
     const titleSelectors = [
       // Modern LeetCode selectors (2024/2025)
@@ -529,9 +487,6 @@ export class CodeParser {
     return 'Unknown Problem';
   }
 
-  /**
-   * Extracts the problem difficulty
-   */
   private static extractProblemDifficulty(): 'Easy' | 'Medium' | 'Hard' | 'Unknown' {
     const difficultySelectors = [
       // Modern LeetCode selectors
@@ -622,9 +577,6 @@ export class CodeParser {
     return 'Unknown';
   }
 
-  /**
-   * Extracts the problem description
-   */
   private static extractProblemDescription(): string {
     const descriptionSelectors = [
       // Modern LeetCode selectors
@@ -686,9 +638,6 @@ export class CodeParser {
     return 'Problem description not available on this page.';
   }
 
-  /**
-   * Extracts problem tags
-   */
   private static extractProblemTags(): string[] {
     const tagSelectors = [
       '.topic-tag',
@@ -713,9 +662,6 @@ export class CodeParser {
     return tags.slice(0, 10); // Limit to first 10 tags
   }
 
-  /**
-   * Extracts problem constraints
-   */
   private static extractProblemConstraints(): string {
     // Look for constraints section in the description
     const descriptionElement = document.querySelector('div[data-track-load="description_content"]') || 
@@ -737,9 +683,6 @@ export class CodeParser {
     return 'No constraints information available.';
   }
 
-  /**
-   * Gets the current code and metadata
-   */
   static getCurrentCodeInfo(): CodeInfo | null {
     const code = this.extractCodeFromEditor();
     if (!code.trim()) {

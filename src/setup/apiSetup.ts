@@ -1,8 +1,5 @@
 /// <reference types="../types/chrome"/>
 
-/**
- * API Setup page script
- */
 class ApiSetupManager {
   private apiKeyInput: HTMLInputElement | null = null;
   private toggleVisibilityBtn: HTMLElement | null = null;
@@ -17,9 +14,6 @@ class ApiSetupManager {
     this.init();
   }
 
-  /**
-   * Initializes the setup page
-   */
   private async init(): Promise<void> {
     try {
       this.setupElements();
@@ -32,9 +26,6 @@ class ApiSetupManager {
     }
   }
 
-  /**
-   * Sets up DOM element references
-   */
   private setupElements(): void {
     this.apiKeyInput = document.getElementById('api-key-input') as HTMLInputElement;
     this.toggleVisibilityBtn = document.getElementById('toggle-visibility');
@@ -53,9 +44,6 @@ class ApiSetupManager {
     };
   }
 
-  /**
-   * Sets up event listeners
-   */
   private setupEventListeners(): void {
     console.log('Setting up event listeners...');
     
@@ -131,9 +119,6 @@ class ApiSetupManager {
     console.log('Event listeners setup complete');
   }
 
-  /**
-   * Handles API key input changes
-   */
   private onApiKeyChange(): void {
     const apiKey = this.apiKeyInput?.value.trim() || '';
     const isValid = this.isValidApiKeyFormat(apiKey);
@@ -166,9 +151,6 @@ class ApiSetupManager {
     this.hideValidationResult();
   }
 
-  /**
-   * Validates API key format
-   */
   private isValidApiKeyFormat(apiKey: string): boolean {
     // Gemini API keys can start with different prefixes and have varying lengths
     // Common formats: AIzaXXX, AIzaSyXXX, etc.
@@ -181,9 +163,6 @@ class ApiSetupManager {
     );
   }
 
-  /**
-   * Toggles API key visibility
-   */
   private toggleApiKeyVisibility(): void {
     if (!this.apiKeyInput) return;
 
@@ -195,9 +174,6 @@ class ApiSetupManager {
     }
   }
 
-  /**
-   * Tests the API key
-   */
   private async testApiKey(): Promise<void> {
     const apiKey = this.apiKeyInput?.value.trim();
     if (!apiKey || !this.isValidApiKeyFormat(apiKey)) {
@@ -253,9 +229,6 @@ class ApiSetupManager {
     }
   }
 
-  /**
-   * Saves the API key
-   */
   private async saveApiKey(): Promise<void> {
     const apiKey = this.apiKeyInput?.value.trim();
     if (!apiKey || !this.isValidApiKeyFormat(apiKey)) {
@@ -296,9 +269,6 @@ class ApiSetupManager {
     }
   }
 
-  /**
-   * Saves extension settings
-   */
   private async saveSettings(): Promise<void> {
     try {
       const settings = {
@@ -323,9 +293,6 @@ class ApiSetupManager {
     }
   }
 
-  /**
-   * Loads current settings
-   */
   private async loadCurrentSettings(): Promise<void> {
     try {
       const response = await chrome.runtime.sendMessage({ type: 'GET_SETTINGS' });
@@ -358,9 +325,6 @@ class ApiSetupManager {
     }
   }
 
-  /**
-   * Checks current API status
-   */
   private async checkCurrentStatus(): Promise<void> {
     try {
       this.updateStatus('checking', 'Checking...');
@@ -385,9 +349,6 @@ class ApiSetupManager {
     }
   }
 
-  /**
-   * Updates status display
-   */
   private updateStatus(status: 'checking' | 'connected' | 'disconnected', text: string): void {
     if (this.statusIndicator) {
       this.statusIndicator.className = `status-dot ${status}`;
@@ -398,9 +359,6 @@ class ApiSetupManager {
     }
   }
 
-  /**
-   * Shows validation result
-   */
   private showValidationResult(message: string, type: 'success' | 'error'): void {
     if (!this.validationResult) return;
 
@@ -409,18 +367,12 @@ class ApiSetupManager {
     this.validationResult.style.display = 'block';
   }
 
-  /**
-   * Hides validation result
-   */
   private hideValidationResult(): void {
     if (this.validationResult) {
       this.validationResult.style.display = 'none';
     }
   }
 
-  /**
-   * Sets button loading state
-   */
   private setButtonLoading(button: HTMLElement | null, isLoading: boolean): void {
     if (!button) return;
 
@@ -435,9 +387,6 @@ class ApiSetupManager {
     (button as HTMLButtonElement).disabled = isLoading;
   }
 
-  /**
-   * Shows notification
-   */
   private showNotification(message: string, type: 'success' | 'error' = 'success'): void {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
@@ -468,34 +417,22 @@ class ApiSetupManager {
     }, 3000);
   }
 
-  /**
-   * Shows error message
-   */
   private showError(message: string): void {
     this.showValidationResult(`❌ ${message}`, 'error');
   }
 
-  /**
-   * Opens privacy policy
-   */
   private openPrivacyPolicy(): void {
     chrome.tabs.create({ 
       url: 'https://github.com/your-username/leetcode-analyzer/blob/main/PRIVACY.md'
     });
   }
 
-  /**
-   * Opens help documentation
-   */
   private openHelp(): void {
     chrome.tabs.create({ 
       url: 'https://github.com/your-username/leetcode-analyzer/wiki'
     });
   }
 
-  /**
-   * Opens feedback form
-   */
   private openFeedback(): void {
     chrome.tabs.create({ 
       url: 'https://forms.gle/your-feedback-form'

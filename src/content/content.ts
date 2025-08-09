@@ -15,9 +15,6 @@ import { Helpers } from '../utils/helpers.js';
 import { CodeParser } from '../utils/codeParser.js';
 import { GeminiClient } from '../utils/geminiClient.js';
 
-/**
- * Content script for LeetCode pages - handles UI injection and code analysis
- */
 class LeetCodeAnalyzer {
   private dropdown: HTMLElement | null = null;
   private isInjected: boolean = false;
@@ -34,12 +31,8 @@ class LeetCodeAnalyzer {
     this.init();
   }
 
-  /**
-   * Initializes the content script
-   */
   private async init(): Promise<void> {
     try {
-      // Wait for page to load
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => this.setupAnalyzer());
       } else {
@@ -50,30 +43,21 @@ class LeetCodeAnalyzer {
     }
   }
 
-  /**
-   * Sets up the analyzer on the page
-   */
   private async setupAnalyzer(): Promise<void> {
     try {
-      // Check if we're on a problem page
       if (!this.isLeetCodeProblemPage()) {
         return;
       }
 
-      // Load settings and API key
       await this.loadSettings();
       await this.loadApiKey();
 
-      // Wait for the code editor to be available
       await this.waitForCodeEditor();
 
-      // Inject the UI
       await this.injectUI();
 
-      // Setup code monitoring
       this.setupCodeMonitoring();
 
-      // Show setup reminder if no API key
       if (!this.apiKey) {
         this.showApiSetupReminder();
       }
@@ -83,17 +67,11 @@ class LeetCodeAnalyzer {
     }
   }
 
-  /**
-   * Checks if we're on a LeetCode problem page
-   */
   private isLeetCodeProblemPage(): boolean {
     return window.location.href.includes('leetcode.com/problems/') &&
            !window.location.href.includes('/solution');
   }
 
-  /**
-   * Loads settings from storage
-   */
   private async loadSettings(): Promise<void> {
     try {
       const response = await chrome.runtime.sendMessage({ type: 'GET_SETTINGS' });
@@ -105,9 +83,6 @@ class LeetCodeAnalyzer {
     }
   }
 
-  /**
-   * Loads API key from storage
-   */
   private async loadApiKey(): Promise<void> {
     try {
       const response = await chrome.runtime.sendMessage({ type: 'GET_API_KEY' });
@@ -119,9 +94,6 @@ class LeetCodeAnalyzer {
     }
   }
 
-  /**
-   * Waits for the code editor to be available
-   */
   private async waitForCodeEditor(): Promise<void> {
     try {
       await Helpers.waitForElement('.monaco-editor, .CodeMirror, .ace_editor', 10000);
@@ -130,9 +102,6 @@ class LeetCodeAnalyzer {
     }
   }
 
-  /**
-   * Injects the analyzer UI into the page
-   */
   private async injectUI(): Promise<void> {
     if (this.isInjected) return;
 
@@ -156,9 +125,6 @@ class LeetCodeAnalyzer {
     }
   }
 
-  /**
-   * Creates the main dropdown element
-   */
   private createDropdown(): HTMLElement {
     const dropdown = document.createElement('div');
     dropdown.id = 'leetcode-analyzer-dropdown';
@@ -232,11 +198,7 @@ class LeetCodeAnalyzer {
     return dropdown;
   }
 
-  /**
-   * Sets up event listeners for the dropdown
-   */
   private setupDropdownEvents(dropdown: HTMLElement): void {
-    // Tab switching
     const tabs = dropdown.querySelectorAll('.lca-tab');
     tabs.forEach(tab => {
       tab.addEventListener('click', (e) => {
@@ -246,24 +208,18 @@ class LeetCodeAnalyzer {
       });
     });
 
-    // Action buttons
     dropdown.querySelector('.lca-analyze-btn')?.addEventListener('click', () => this.handleAnalyze());
     dropdown.querySelector('.lca-solution-btn')?.addEventListener('click', () => this.handleGenerateSolution());
     dropdown.querySelector('.lca-complexity-btn')?.addEventListener('click', () => this.handleAnalyzeComplexity());
     dropdown.querySelector('.lca-optimize-btn')?.addEventListener('click', () => this.handleOptimize());
 
-    // Control buttons
     dropdown.querySelector('.lca-settings-btn')?.addEventListener('click', () => this.showSettings());
     dropdown.querySelector('.lca-close-btn')?.addEventListener('click', () => this.toggleDropdown());
   }
 
-  /**
-   * Positions the dropdown on the page
-   */
   private positionDropdown(): void {
     if (!this.dropdown) return;
 
-    // Try to position near the code editor
     const codeEditor = document.querySelector('.monaco-editor, .CodeMirror, .ace_editor');
     
     if (codeEditor) {
@@ -273,7 +229,6 @@ class LeetCodeAnalyzer {
       this.dropdown.style.right = '20px';
       this.dropdown.style.zIndex = '10000';
     } else {
-      // Fallback positioning
       this.dropdown.style.position = 'fixed';
       this.dropdown.style.top = '20px';
       this.dropdown.style.right = '20px';
@@ -281,11 +236,7 @@ class LeetCodeAnalyzer {
     }
   }
 
-  /**
-   * Injects a toggle button beside the Submissions button
-   */
   private injectToggleButton(): void {
-    // Look for common LeetCode submission button patterns
     const selectors = [
       '[data-e2e-locator="console-submit-button"]',
       'button[data-cy="submit-code-btn"]',
@@ -302,7 +253,6 @@ class LeetCodeAnalyzer {
       if (submitButton) break;
     }
 
-    // Fallback: look for any button containing "Submit" text
     if (!submitButton) {
       const buttons = document.querySelectorAll('button');
       buttons.forEach(button => {
@@ -313,18 +263,15 @@ class LeetCodeAnalyzer {
     }
 
     if (submitButton && submitButton.parentElement) {
-      // Check if button already exists
       if (document.querySelector('.lca-toggle-button')) {
         return;
       }
 
-      // Create the toggle button
       const toggleButton = document.createElement('button');
       toggleButton.className = 'lca-toggle-button';
       toggleButton.innerHTML = '🧠 Analyzer';
       toggleButton.title = 'Open LeetCode Code Analyzer';
       
-      // Style the button to match LeetCode's design
       toggleButton.style.cssText = `
         margin-left: 8px;
         padding: 8px 16px;
@@ -340,7 +287,6 @@ class LeetCodeAnalyzer {
         align-self: center;
       `;
 
-      // Add hover effect
       toggleButton.addEventListener('mouseenter', () => {
         toggleButton.style.background = '#059669';
         toggleButton.style.transform = 'translateY(-1px)';
@@ -351,20 +297,16 @@ class LeetCodeAnalyzer {
         toggleButton.style.transform = 'translateY(0)';
       });
 
-      // Add click handler
       toggleButton.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
         this.toggleDropdown();
       });
 
-      // Insert the button after the submit button
       if (submitButton.parentElement) {
-        // If parent is a flex container, insert directly
         if (getComputedStyle(submitButton.parentElement).display === 'flex') {
           submitButton.parentElement.insertBefore(toggleButton, submitButton.nextSibling);
         } else {
-          // Wrap in a flex container
           const wrapper = document.createElement('div');
           wrapper.style.cssText = 'display: flex; align-items: center; gap: 8px;';
           submitButton.parentElement.insertBefore(wrapper, submitButton);
@@ -375,9 +317,6 @@ class LeetCodeAnalyzer {
     }
   }
 
-  /**
-   * Applies theme styling
-   */
   private applyTheme(): void {
     if (!this.dropdown) return;
 
@@ -385,9 +324,6 @@ class LeetCodeAnalyzer {
     this.dropdown.setAttribute('data-theme', theme);
   }
 
-  /**
-   * Sets up code monitoring
-   */
   private setupCodeMonitoring(): void {
     if (this.settings?.autoAnalyze) {
       this.codeObserver = CodeParser.observeCodeChanges(
@@ -398,17 +334,10 @@ class LeetCodeAnalyzer {
     }
   }
 
-  /**
-   * Handles code changes
-   */
   private async handleCodeChange(event: CodeChangeEvent): Promise<void> {
-    // Update problem info display
     this.updateProblemInfo();
   }
 
-  /**
-   * Updates the problem information display
-   */
   private updateProblemInfo(): void {
     if (!this.dropdown) return;
 
@@ -427,30 +356,22 @@ class LeetCodeAnalyzer {
     }
   }
 
-  /**
-   * Switches between tabs
-   */
   private switchTab(tabName: DropdownState['activeTab']): void {
     if (!this.dropdown) return;
 
     this.currentState.activeTab = tabName;
 
-    // Update tab buttons
     const tabs = this.dropdown.querySelectorAll('.lca-tab');
     tabs.forEach(tab => {
       tab.classList.toggle('active', tab.getAttribute('data-tab') === tabName);
     });
 
-    // Update tab content
     const contents = this.dropdown.querySelectorAll('.lca-tab-content');
     contents.forEach(content => {
       content.classList.toggle('active', content.getAttribute('data-content') === tabName);
     });
   }
 
-  /**
-   * Toggles dropdown visibility
-   */
   private toggleDropdown(): void {
     if (!this.dropdown) return;
 
@@ -458,9 +379,6 @@ class LeetCodeAnalyzer {
     this.dropdown.style.display = this.currentState.isVisible ? 'block' : 'none';
   }
 
-  /**
-   * Shows API setup reminder
-   */
   private showApiSetupReminder(): void {
     const notification = Helpers.showNotification(
       'Please set up your Gemini API key to use the analyzer features.',
@@ -469,17 +387,10 @@ class LeetCodeAnalyzer {
     );
   }
 
-  /**
-   * Shows settings dialog
-   */
   private showSettings(): void {
-    // For now, just open the setup page
     chrome.runtime.sendMessage({ type: 'OPEN_SETUP' });
   }
 
-  /**
-   * Handles code analysis
-   */
   private async handleAnalyze(): Promise<void> {
     if (!this.apiKey) {
       Helpers.showNotification('Please set up your API key first', 'error');
@@ -510,9 +421,6 @@ class LeetCodeAnalyzer {
     }
   }
 
-  /**
-   * Handles solution generation
-   */
   private async handleGenerateSolution(): Promise<void> {
     if (!this.apiKey) {
       Helpers.showNotification('Please set up your API key first', 'error');
@@ -538,9 +446,6 @@ class LeetCodeAnalyzer {
     }
   }
 
-  /**
-   * Handles complexity analysis
-   */
   private async handleAnalyzeComplexity(): Promise<void> {
     if (!this.apiKey) {
       Helpers.showNotification('Please set up your API key first', 'error');
@@ -571,9 +476,6 @@ class LeetCodeAnalyzer {
     }
   }
 
-  /**
-   * Handles code optimization
-   */
   private async handleOptimize(): Promise<void> {
     if (!this.apiKey) {
       Helpers.showNotification('Please set up your API key first', 'error');
@@ -604,9 +506,6 @@ class LeetCodeAnalyzer {
     }
   }
 
-  /**
-   * Sets loading state for a specific tab
-   */
   private setLoading(tab: DropdownState['activeTab'], isLoading: boolean): void {
     if (!this.dropdown) return;
 
@@ -624,16 +523,12 @@ class LeetCodeAnalyzer {
     }
   }
 
-  /**
-   * Displays analysis results
-   */
   private displayAnalysisResults(result: AnalysisResult): void {
     const container = this.dropdown?.querySelector('#lca-analyze-results');
     if (!container) return;
 
     let html = '<div class="lca-analysis-results">';
     
-    // Errors
     if (result.errors.length > 0) {
       html += '<div class="lca-section"><h4>Errors Found:</h4>';
       result.errors.forEach(error => {
@@ -651,7 +546,6 @@ class LeetCodeAnalyzer {
       html += '</div>';
     }
 
-    // Warnings
     if (result.warnings.length > 0) {
       html += '<div class="lca-section"><h4>Warnings:</h4>';
       result.warnings.forEach(warning => {
@@ -682,9 +576,6 @@ class LeetCodeAnalyzer {
     container.innerHTML = html;
   }
 
-  /**
-   * Displays solution results
-   */
   private displaySolutionResults(result: SolutionResult): void {
     const container = this.dropdown?.querySelector('#lca-solution-results');
     if (!container) return;
@@ -705,15 +596,11 @@ class LeetCodeAnalyzer {
 
     container.innerHTML = html;
 
-    // Add copy functionality
     (window as any).copyCode = () => {
       Helpers.copyToClipboard(result.code);
     };
   }
 
-  /**
-   * Displays complexity results
-   */
   private displayComplexityResults(result: ComplexityAnalysis): void {
     const container = this.dropdown?.querySelector('#lca-complexity-results');
     if (!container) return;
@@ -754,9 +641,6 @@ class LeetCodeAnalyzer {
     container.innerHTML = html;
   }
 
-  /**
-   * Displays optimization results
-   */
   private displayOptimizationResults(suggestions: OptimizationSuggestion[]): void {
     const container = this.dropdown?.querySelector('#lca-optimize-results');
     if (!container) return;
@@ -803,9 +687,6 @@ class LeetCodeAnalyzer {
     container.innerHTML = html;
   }
 
-  /**
-   * Displays error message
-   */
   private displayError(tab: DropdownState['activeTab'], error: string): void {
     const container = this.dropdown?.querySelector(`#lca-${tab}-results`);
     if (!container) return;
@@ -820,10 +701,8 @@ class LeetCodeAnalyzer {
   }
 }
 
-// Initialize the analyzer when the content script loads
 const analyzer = new LeetCodeAnalyzer();
 
-// Add message listener for popup communication
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('Content script received message:', message);
   
@@ -872,7 +751,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
     }
     
-    return true; // Keep the message channel open for async response
+    return true;
   }
   
   return false;

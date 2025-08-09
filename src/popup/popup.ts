@@ -21,9 +21,6 @@ class PopupManager {
     }
   }
 
-  /**
-   * Sets up DOM element references
-   */
   private setupElements(): void {
     this.apiStatusIndicator = document.querySelector('.status-dot');
     this.apiStatusText = document.querySelector('.status-text');
@@ -38,9 +35,6 @@ class PopupManager {
     };
   }
 
-  /**
-   * Sets up event listeners
-   */
   private setupEventListeners(): void {
     // Quick action buttons
     document.getElementById('analyze-current')?.addEventListener('click', () => {
@@ -76,9 +70,6 @@ class PopupManager {
     });
   }
 
-  /**
-   * Loads and displays all data
-   */
   private async loadAndDisplayData(): Promise<void> {
     await Promise.all([
       this.checkApiStatus(),
@@ -87,9 +78,6 @@ class PopupManager {
     ]);
   }
 
-  /**
-   * Checks API status
-   */
   private async checkApiStatus(): Promise<void> {
     try {
       this.updateApiStatus('checking', 'Checking...');
@@ -97,7 +85,6 @@ class PopupManager {
       const response = await chrome.runtime.sendMessage({ type: 'GET_API_KEY' });
       
       if (response.success && response.data) {
-        // API key exists, check if it's valid
         const statusResponse = await chrome.storage.local.get(['apiKeyStatus']);
         const apiKeyStatus = statusResponse.apiKeyStatus;
 
@@ -114,9 +101,6 @@ class PopupManager {
     }
   }
 
-  /**
-   * Updates API status display
-   */
   private updateApiStatus(status: 'checking' | 'connected' | 'disconnected', text: string): void {
     if (this.apiStatusIndicator) {
       this.apiStatusIndicator.className = `status-dot ${status}`;
@@ -127,9 +111,6 @@ class PopupManager {
     }
   }
 
-  /**
-   * Loads recent activity
-   */
   private async loadRecentActivity(): Promise<void> {
     try {
       const result = await chrome.storage.local.get(['recentActivity']);
@@ -148,7 +129,7 @@ class PopupManager {
           `;
         } else {
           this.recentActivityList.innerHTML = activities
-            .slice(0, 3) // Show only last 3 activities
+            .slice(0, 3)
             .map((activity: any) => `
               <div class="activity-item">
                 <span class="activity-icon">${this.getActivityIcon(activity.type)}</span>
@@ -165,9 +146,6 @@ class PopupManager {
     }
   }
 
-  /**
-   * Loads statistics
-   */
   private async loadStatistics(): Promise<void> {
     try {
       const result = await chrome.storage.local.get(['statistics']);
@@ -187,9 +165,6 @@ class PopupManager {
     }
   }
 
-  /**
-   * Updates a statistic display
-   */
   private updateStatistic(key: string, value: number): void {
     const element = this.statisticsElements[key];
     if (element) {
@@ -197,18 +172,13 @@ class PopupManager {
     }
   }
 
-  /**
-   * Opens the current LeetCode page with analyzer
-   */
   private async openCurrentPage(): Promise<void> {
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       
       if (tab?.url?.includes('leetcode.com/problems/')) {
-        // Already on a LeetCode problem page, just close popup
         window.close();
       } else {
-        // Navigate to LeetCode
         chrome.tabs.create({ url: 'https://leetcode.com/problemset/all/' });
         window.close();
       }
@@ -217,9 +187,6 @@ class PopupManager {
     }
   }
 
-  /**
-   * Opens the settings page
-   */
   private openSettings(): void {
     chrome.tabs.create({ 
       url: chrome.runtime.getURL('dist/setup/apiSetup.html') 
@@ -227,28 +194,19 @@ class PopupManager {
     window.close();
   }
 
-  /**
-   * Opens the help documentation
-   */
   private openHelp(): void {
     chrome.tabs.create({ 
-      url: 'https://github.com/your-username/leetcode-analyzer/wiki' // Replace with actual help URL
+      url: 'https://github.com/your-username/leetcode-analyzer/wiki' 
     });
     window.close();
   }
 
-  /**
-   * Opens privacy policy
-   */
   private openPrivacyPolicy(): void {
     chrome.tabs.create({ 
       url: 'https://github.com/your-username/leetcode-analyzer/blob/main/PRIVACY.md' // Replace with actual privacy URL
     });
   }
 
-  /**
-   * Analyzes current code on LeetCode page
-   */
   private async analyzeCurrentCode(): Promise<void> {
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -267,7 +225,6 @@ class PopupManager {
 
       console.log('Sending TRIGGER_ANALYSIS message to tab:', tab.id);
 
-      // First, try to ping the existing content script
       let contentScriptLoaded = false;
       try {
         const pingResponse = await chrome.tabs.sendMessage(tab.id, { type: 'PING' });
@@ -280,7 +237,6 @@ class PopupManager {
       }
 
       if (contentScriptLoaded) {
-        // Content script is loaded, send analysis trigger
         try {
           const response = await chrome.tabs.sendMessage(tab.id, { 
             type: 'TRIGGER_ANALYSIS',
@@ -296,11 +252,9 @@ class PopupManager {
         }
       }
 
-      // If we reach here, content script needs to be injected
       console.log('Injecting content script manually...');
       
       try {
-        // First try to send message to existing content script
         const response = await chrome.tabs.sendMessage(tab.id, { 
           type: 'TRIGGER_ANALYSIS',
           action: 'analyze'
@@ -313,13 +267,11 @@ class PopupManager {
         console.log('Content script not loaded, injecting it manually...', messageError);
         
         try {
-          // If content script not loaded, inject it manually
           await chrome.scripting.executeScript({
             target: { tabId: tab.id },
             files: ['dist/content/content-bundled.js']
           });
 
-          // Also inject CSS
           await chrome.scripting.insertCSS({
             target: { tabId: tab.id },
             files: ['dist/content/content.css']
@@ -327,12 +279,10 @@ class PopupManager {
 
           console.log('Scripts injected successfully, waiting...');
 
-          // Wait longer for scripts to load and initialize
           await new Promise(resolve => setTimeout(resolve, 2000));
 
           console.log('Attempting to send message after injection...');
 
-          // Try sending message again
           const response = await chrome.tabs.sendMessage(tab.id, { 
             type: 'TRIGGER_ANALYSIS',
             action: 'analyze'
@@ -358,9 +308,6 @@ class PopupManager {
     }
   }
 
-  /**
-   * Checks time complexity of current code
-   */
   private async checkTimeComplexity(): Promise<void> {
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -376,7 +323,6 @@ class PopupManager {
       }
 
       try {
-        // First try to send message to existing content script
         const response = await chrome.tabs.sendMessage(tab.id, { 
           type: 'TRIGGER_ANALYSIS',
           action: 'complexity'
@@ -388,7 +334,6 @@ class PopupManager {
         console.log('Content script not loaded for complexity check, injecting it manually...', messageError);
         
         try {
-          // If content script not loaded, inject it manually
           await chrome.scripting.executeScript({
             target: { tabId: tab.id },
             files: ['dist/content/content-bundled.js']
@@ -401,7 +346,6 @@ class PopupManager {
 
           console.log('Scripts injected for complexity check, waiting...');
           
-          // Wait longer for scripts to load and initialize
           await new Promise(resolve => setTimeout(resolve, 2000));
 
           const response = await chrome.tabs.sendMessage(tab.id, { 
@@ -422,9 +366,6 @@ class PopupManager {
     }
   }
 
-  /**
-   * Finds errors in current code
-   */
   private async findCodeErrors(): Promise<void> {
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -440,7 +381,6 @@ class PopupManager {
       }
 
       try {
-        // First try to send message to existing content script
         const response = await chrome.tabs.sendMessage(tab.id, { 
           type: 'TRIGGER_ANALYSIS',
           action: 'errors'
@@ -452,7 +392,6 @@ class PopupManager {
         console.log('Content script not loaded for error detection, injecting it manually...', messageError);
         
         try {
-          // If content script not loaded, inject it manually
           await chrome.scripting.executeScript({
             target: { tabId: tab.id },
             files: ['dist/content/content-bundled.js']
@@ -465,7 +404,6 @@ class PopupManager {
 
           console.log('Scripts injected for error detection, waiting...');
           
-          // Wait longer for scripts to load and initialize
           await new Promise(resolve => setTimeout(resolve, 2000));
 
           const response = await chrome.tabs.sendMessage(tab.id, { 
@@ -486,44 +424,30 @@ class PopupManager {
     }
   }
 
-  /**
-   * Shows a notification to the user
-   */
   private showNotification(message: string): void {
-    // Create notification element
     const notification = document.createElement('div');
     notification.className = 'popup-notification';
     notification.textContent = message;
     
     document.body.appendChild(notification);
     
-    // Remove after 3 seconds
     setTimeout(() => {
       notification.remove();
     }, 3000);
   }
 
-  /**
-   * Opens support page
-   */
   private openSupport(): void {
     chrome.tabs.create({ 
       url: 'https://github.com/your-username/leetcode-analyzer/issues' // Replace with actual support URL
     });
   }
 
-  /**
-   * Opens feedback form
-   */
   private openFeedback(): void {
     chrome.tabs.create({ 
       url: 'https://forms.gle/your-feedback-form' // Replace with actual feedback URL
     });
   }
 
-  /**
-   * Gets activity icon based on type
-   */
   private getActivityIcon(type: string): string {
     const icons = {
       analyze: '🔍',
@@ -537,9 +461,6 @@ class PopupManager {
     return (icons as any)[type] || icons.default;
   }
 
-  /**
-   * Formats timestamp for display
-   */
   private formatTime(timestamp: number): string {
     const now = Date.now();
     const diff = now - timestamp;
@@ -558,18 +479,12 @@ class PopupManager {
     }
   }
 
-  /**
-   * Escapes HTML to prevent XSS
-   */
   private escapeHtml(text: string): string {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
   }
 
-  /**
-   * Shows error state
-   */
   private showErrorState(): void {
     const content = document.querySelector('.popup-content');
     if (content) {
@@ -584,7 +499,6 @@ class PopupManager {
   }
 }
 
-// Initialize popup when DOM is loaded
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => new PopupManager());
 } else {
