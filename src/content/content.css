@@ -281,16 +281,16 @@
 
 /* Error Display */
 .lca-error {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: #eff6ff;
+  border: 1px solid #93c5fd;
   border-radius: 6px;
   padding: 12px;
   margin-bottom: 8px;
 }
 
 .leetcode-analyzer-dropdown[data-theme="dark"] .lca-error {
-  background: #7f1d1d;
-  border-color: #dc2626;
+  background: #1e3a8a;
+  border-color: #3b82f6;
 }
 
 .lca-error-header {
@@ -332,12 +332,12 @@
 }
 
 .lca-error-message {
-  color: #7f1d1d;
+  color: #1e40af;
   margin-bottom: 4px;
 }
 
 .leetcode-analyzer-dropdown[data-theme="dark"] .lca-error-message {
-  color: #fca5a5;
+  color: #93c5fd;
 }
 
 .lca-error-suggestion {
@@ -352,25 +352,25 @@
 
 /* Warning Display */
 .lca-warning {
-  background: #fffbeb;
-  border: 1px solid #fed7aa;
+  background: #f0f9ff;
+  border: 1px solid #7dd3fc;
   border-radius: 6px;
   padding: 12px;
   margin-bottom: 8px;
 }
 
 .leetcode-analyzer-dropdown[data-theme="dark"] .lca-warning {
-  background: #451a03;
-  border-color: #ea580c;
+  background: #0c4a6e;
+  border-color: #0ea5e9;
 }
 
 .lca-warning-message {
-  color: #92400e;
+  color: #0369a1;
   margin-bottom: 4px;
 }
 
 .leetcode-analyzer-dropdown[data-theme="dark"] .lca-warning-message {
-  color: #fdba74;
+  color: #7dd3fc;
 }
 
 .lca-warning-suggestion {

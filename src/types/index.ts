@@ -72,6 +72,7 @@ export interface SolutionResult {
   timeComplexity: string;
   spaceComplexity: string;
   explanation?: string;
+  keyInsights?: string;
 }
 
 export interface ComplexityAnalysis {
@@ -83,15 +84,18 @@ export interface ComplexityAnalysis {
   spaceComplexity: string;
   explanation: string;
   comparisonWithOptimal?: string;
+  leetcodePerformance?: string;
+  scalabilityAnalysis?: string;
 }
 
 export interface OptimizationSuggestion {
-  type: 'algorithm' | 'data-structure' | 'implementation';
+  type: 'algorithm' | 'data-structure' | 'implementation' | 'leetcode-pattern';
   description: string;
   impact: 'low' | 'medium' | 'high';
   before?: string;
   after?: string;
   complexityImprovement?: string;
+  leetcodeContext?: string;
 }
 
 export interface GeminiRequest {

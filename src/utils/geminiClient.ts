@@ -320,35 +320,63 @@ Respond only with valid JSON.`;
    */
   private static buildSolutionPrompt(problemInfo: ProblemInfo, language: CodeInfo['language']): string {
     return `
-You are an expert LeetCode problem solver. Generate an optimal solution for this LeetCode problem in ${language}.
+You are an expert LeetCode problem solver. Generate a complete, optimal solution for this LeetCode problem in ${language}.
 
 Problem: ${problemInfo.title}
 Difficulty: ${problemInfo.difficulty}
 Description: ${problemInfo.description}
 
 Requirements:
-1. **IMPORTANT**: Provide ONLY the function body code that goes inside the LeetCode function template
-2. **DO NOT** include class definitions, main functions, or complete programs
-3. **DO NOT** include any comments or explanations in the code
-4. Use optimal time and space complexity for LeetCode constraints
-5. Handle all edge cases common in competitive programming
-6. Follow LeetCode's expected function signature style
+1. **IMPORTANT**: Provide the COMPLETE LeetCode solution with proper class structure and function signature
+2. Include the standard LeetCode template (class Solution with public method)
+3. Use optimal time and space complexity for LeetCode constraints
+4. Handle all edge cases common in competitive programming
+5. Follow LeetCode's exact expected format for submissions
+6. **DO NOT** include comments or explanations in the code
 
 Please provide your response in the following JSON format:
 {
-  "code": "only_the_function_body_code_without_function_signature",
+  "code": "complete_leetcode_solution_with_class_and_function_signature",
   "approach": "brief_description_of_algorithm_and_data_structures_used",
   "timeComplexity": "O(...)",
   "spaceComplexity": "O(...)",
   "keyInsights": "LeetCode-specific insights and competitive programming techniques used"
 }
 
-Example for ${language}:
-- If the problem asks for a function that returns an integer, provide only the logic inside the function
-- Focus on LeetCode's expected input/output format
-- Use efficient algorithms suitable for competitive programming
+Example format for ${language}:
+${this.getLanguageTemplate(language)}
+
+Provide a complete, ready-to-submit LeetCode solution.
 
 Respond only with valid JSON.`;
+  }
+
+  /**
+   * Gets the standard LeetCode template for a language
+   */
+  private static getLanguageTemplate(language: CodeInfo['language']): string {
+    switch (language) {
+      case 'cpp':
+        return `class Solution {
+public:
+    // Your method here
+};`;
+      case 'java':
+        return `class Solution {
+    public // your method here
+}`;
+      case 'python':
+        return `class Solution:
+    def methodName(self, params):
+        # your code here`;
+      case 'javascript':
+      case 'typescript':
+        return `var methodName = function(params) {
+    // your code here
+};`;
+      default:
+        return 'Provide complete function/class structure as expected by LeetCode';
+    }
   }
 
   /**
@@ -517,7 +545,8 @@ Respond only with valid JSON.`;
         language,
         approach: parsed.approach || 'Unknown approach',
         timeComplexity: parsed.timeComplexity || 'O(?)',
-        spaceComplexity: parsed.spaceComplexity || 'O(?)'
+        spaceComplexity: parsed.spaceComplexity || 'O(?)',
+        keyInsights: parsed.keyInsights
       };
     } catch (error) {
       // Try to extract code from markdown code blocks
@@ -535,7 +564,7 @@ Respond only with valid JSON.`;
       return {
         code: code.trim(),
         language,
-        approach: 'Generated solution (parsed from text)',
+        approach: 'Generated LeetCode solution (parsed from text)',
         timeComplexity: 'O(?)',
         spaceComplexity: 'O(?)'
       };
@@ -571,7 +600,9 @@ Respond only with valid JSON.`;
         },
         spaceComplexity: parsed.spaceComplexity || 'O(?)',
         explanation: parsed.explanation || 'No explanation provided',
-        comparisonWithOptimal: parsed.comparisonWithOptimal
+        comparisonWithOptimal: parsed.comparisonWithOptimal,
+        leetcodePerformance: parsed.leetcodePerformance,
+        scalabilityAnalysis: parsed.scalabilityAnalysis
       };
     } catch (error) {
       // Try to extract complexity information from plain text
@@ -610,14 +641,67 @@ Respond only with valid JSON.`;
    */
   private static parseOptimizationResponse(responseText: string): OptimizationSuggestion[] {
     try {
-      const parsed = JSON.parse(responseText);
+      // Try to extract JSON from response if it's wrapped in markdown or extra text
+      let jsonStr = responseText.trim();
+      
+      // Look for JSON block in markdown
+      const jsonMatch = jsonStr.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+      if (jsonMatch && jsonMatch[1]) {
+        jsonStr = jsonMatch[1];
+      } else {
+        // Look for standalone JSON object
+        const objectMatch = jsonStr.match(/\{[\s\S]*\}/);
+        if (objectMatch && objectMatch[0]) {
+          jsonStr = objectMatch[0];
+        }
+      }
+      
+      const parsed = JSON.parse(jsonStr);
       return parsed.suggestions || [];
     } catch (error) {
-      return [{
-        type: 'implementation',
-        description: 'Failed to parse optimization suggestions',
-        impact: 'low'
-      }];
+      // Try to extract optimization suggestions from plain text
+      const text = responseText.toLowerCase();
+      const suggestions: OptimizationSuggestion[] = [];
+      
+      // Look for common optimization patterns
+      if (text.includes('algorithm') && text.includes('improve')) {
+        suggestions.push({
+          type: 'algorithm',
+          description: 'Consider algorithm optimization based on the response',
+          impact: 'medium',
+          leetcodeContext: 'Algorithm improvements for competitive programming'
+        });
+      }
+      
+      if (text.includes('data structure') || text.includes('hash') || text.includes('tree')) {
+        suggestions.push({
+          type: 'data-structure',
+          description: 'Consider using more efficient data structures',
+          impact: 'high',
+          leetcodeContext: 'Data structure optimization for LeetCode problems'
+        });
+      }
+      
+      if (text.includes('time complexity') || text.includes('o(n') || text.includes('optimize')) {
+        suggestions.push({
+          type: 'implementation',
+          description: 'Time complexity can be improved',
+          impact: 'high',
+          leetcodeContext: 'Performance optimization for LeetCode constraints'
+        });
+      }
+      
+      // If no specific patterns found, provide general feedback
+      if (suggestions.length === 0) {
+        suggestions.push({
+          type: 'implementation',
+          description: `Optimization insight: ${responseText.substring(0, 150)}...`,
+          impact: 'low',
+          leetcodeContext: 'General optimization feedback'
+        });
+      }
+      
+      return suggestions;
     }
   }
 
