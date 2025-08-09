@@ -256,7 +256,7 @@ export class Helpers {
   }
 
   /**
-   * Escapes HTML characters to prevent XSS
+   * Escapes HTML while preserving some safe formatting
    */
   static escapeHtml(text: string): string {
     const map: Record<string, string> = {
@@ -267,6 +267,29 @@ export class Helpers {
       "'": '&#039;'
     };
     return text.replace(/[&<>"']/g, (m) => map[m] || m);
+  }
+
+  /**
+   * Formats text with safe HTML markup for better readability
+   */
+  static formatTextWithMarkup(text: string): string {
+    // First escape dangerous HTML
+    let formatted = this.escapeHtml(text);
+    
+    // Then apply safe formatting
+    formatted = formatted
+      // Bold text for **text**
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      // Italic text for *text*
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      // Code snippets for `code`
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      // Line breaks for better readability
+      .replace(/\n/g, '<br>')
+      // O() complexity highlighting
+      .replace(/O\([^)]+\)/g, '<span class="lca-complexity">$&</span>');
+    
+    return formatted;
   }
 
   /**

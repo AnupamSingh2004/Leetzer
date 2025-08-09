@@ -142,6 +142,9 @@ class LeetCodeAnalyzer {
       this.positionDropdown();
       document.body.appendChild(this.dropdown);
 
+      // Inject the toggle button near submissions
+      this.injectToggleButton();
+
       // Mark as injected
       this.isInjected = true;
 
@@ -275,6 +278,100 @@ class LeetCodeAnalyzer {
       this.dropdown.style.top = '20px';
       this.dropdown.style.right = '20px';
       this.dropdown.style.zIndex = '10000';
+    }
+  }
+
+  /**
+   * Injects a toggle button beside the Submissions button
+   */
+  private injectToggleButton(): void {
+    // Look for common LeetCode submission button patterns
+    const selectors = [
+      '[data-e2e-locator="console-submit-button"]',
+      'button[data-cy="submit-code-btn"]',
+      'button:contains("Submit")',
+      '.submit-button',
+      '[data-testid="submit-button"]',
+      'button[class*="submit"]',
+      'button[class*="Submit"]'
+    ];
+
+    let submitButton: Element | null = null;
+    for (const selector of selectors) {
+      submitButton = document.querySelector(selector);
+      if (submitButton) break;
+    }
+
+    // Fallback: look for any button containing "Submit" text
+    if (!submitButton) {
+      const buttons = document.querySelectorAll('button');
+      buttons.forEach(button => {
+        if (button.textContent?.toLowerCase().includes('submit')) {
+          submitButton = button;
+        }
+      });
+    }
+
+    if (submitButton && submitButton.parentElement) {
+      // Check if button already exists
+      if (document.querySelector('.lca-toggle-button')) {
+        return;
+      }
+
+      // Create the toggle button
+      const toggleButton = document.createElement('button');
+      toggleButton.className = 'lca-toggle-button';
+      toggleButton.innerHTML = '🧠 Analyzer';
+      toggleButton.title = 'Open LeetCode Code Analyzer';
+      
+      // Style the button to match LeetCode's design
+      toggleButton.style.cssText = `
+        margin-left: 8px;
+        padding: 8px 16px;
+        background: #10b981;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        height: fit-content;
+        align-self: center;
+      `;
+
+      // Add hover effect
+      toggleButton.addEventListener('mouseenter', () => {
+        toggleButton.style.background = '#059669';
+        toggleButton.style.transform = 'translateY(-1px)';
+      });
+
+      toggleButton.addEventListener('mouseleave', () => {
+        toggleButton.style.background = '#10b981';
+        toggleButton.style.transform = 'translateY(0)';
+      });
+
+      // Add click handler
+      toggleButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.toggleDropdown();
+      });
+
+      // Insert the button after the submit button
+      if (submitButton.parentElement) {
+        // If parent is a flex container, insert directly
+        if (getComputedStyle(submitButton.parentElement).display === 'flex') {
+          submitButton.parentElement.insertBefore(toggleButton, submitButton.nextSibling);
+        } else {
+          // Wrap in a flex container
+          const wrapper = document.createElement('div');
+          wrapper.style.cssText = 'display: flex; align-items: center; gap: 8px;';
+          submitButton.parentElement.insertBefore(wrapper, submitButton);
+          wrapper.appendChild(submitButton);
+          wrapper.appendChild(toggleButton);
+        }
+      }
     }
   }
 
@@ -570,9 +667,9 @@ class LeetCodeAnalyzer {
 
     // Suggestions
     if (result.suggestions.length > 0) {
-      html += '<div class="lca-section"><h4>Suggestions:</h4><ul>';
+      html += '<div class="lca-section"><h4>💡 LeetCode Insights:</h4><ul class="lca-suggestions-list">';
       result.suggestions.forEach(suggestion => {
-        html += `<li>${Helpers.escapeHtml(suggestion)}</li>`;
+        html += `<li class="lca-suggestion-item">${Helpers.formatTextWithMarkup(suggestion)}</li>`;
       });
       html += '</ul></div>';
     }

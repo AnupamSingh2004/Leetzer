@@ -4,8 +4,8 @@
   position: fixed;
   top: 20px;
   right: 20px;
-  width: 380px;
-  max-height: 600px;
+  width: 480px;
+  max-height: 700px;
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
@@ -214,7 +214,7 @@
 
 /* Content */
 .lca-content {
-  max-height: 400px;
+  max-height: 500px;
   overflow-y: auto;
 }
 
@@ -549,6 +549,8 @@
   padding: 16px;
   margin-bottom: 12px;
   border-left: 4px solid #6b7280;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .leetcode-analyzer-dropdown[data-theme="dark"] .lca-optimization-item {
@@ -638,6 +640,7 @@
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   margin-bottom: 8px;
+  overflow: hidden;
 }
 
 .lca-before,
@@ -646,6 +649,7 @@
   border-radius: 6px;
   padding: 8px;
   border: 1px solid #e5e7eb;
+  overflow: hidden;
 }
 
 .leetcode-analyzer-dropdown[data-theme="dark"] .lca-before,
@@ -760,11 +764,16 @@
 }
 
 /* Responsive Design */
-@media (max-width: 500px) {
+@media (max-width: 600px) {
   .leetcode-analyzer-dropdown {
     width: calc(100vw - 40px);
     right: 20px;
     left: 20px;
+    max-height: 80vh;
+  }
+  
+  .lca-content {
+    max-height: 60vh;
   }
   
   .lca-complexity-grid {
@@ -773,6 +782,22 @@
   
   .lca-code-comparison {
     grid-template-columns: 1fr;
+  }
+  
+  .lca-optimization-item {
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  
+  .lca-optimization-description {
+    font-size: 11px;
+    margin-bottom: 8px;
+  }
+  
+  .lca-before pre,
+  .lca-after pre {
+    font-size: 9px;
+    padding: 4px;
   }
 }
 
@@ -786,6 +811,24 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Toggle Button */
+.lca-toggle-button {
+  font-family: inherit !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.lca-toggle-button:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+.lca-toggle-button:active {
+  transform: translateY(0) scale(0.98) !important;
 }
 
 .leetcode-analyzer-dropdown {
@@ -862,4 +905,52 @@
 
 .leetcode-analyzer-notification.error {
   background: #ef4444;
+}
+
+/* Enhanced Suggestions Styling */
+.lca-suggestions-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+}
+
+.lca-suggestion-item {
+  background: #f0f9ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.leetcode-analyzer-dropdown[data-theme="dark"] .lca-suggestion-item {
+  background: #1e3a8a;
+  border-color: #3b82f6;
+  color: #e5f3ff;
+}
+
+.lca-suggestion-item code {
+  background: #e0e7ff;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 0.9em;
+}
+
+.leetcode-analyzer-dropdown[data-theme="dark"] .lca-suggestion-item code {
+  background: #312e81;
+  color: #c7d2fe;
+}
+
+.lca-complexity {
+  background: #ddd6fe;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: 600;
+  color: #5b21b6;
+}
+
+.leetcode-analyzer-dropdown[data-theme="dark"] .lca-complexity {
+  background: #4c1d95;
+  color: #a5b4fc;
 }
