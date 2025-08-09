@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "AI-powered code analysis, error detection, and optimization suggestions for LeetCode problems",
   "scripts": {
-    "build": "tsc && npm run copy-assets",
+    "build": "tsc && npm run copy-assets && npm run bundle-content",
+    "bundle-content": "node build-content.js",
     "watch": "tsc --watch",
     "copy-assets": "npm run copy-html && npm run copy-css && npm run copy-icons",
     "copy-html": "mkdir -p dist/popup dist/setup && cp src/popup/*.html dist/popup/ && cp src/setup/*.html dist/setup/",
@@ -15,6 +16,7 @@
   },
   "devDependencies": {
     "@types/chrome": "^0.0.268",
+    "esbuild": "^0.25.8",
     "typescript": "^5.1.6"
   },
   "private": true,

@@ -724,4 +724,59 @@ class LeetCodeAnalyzer {
 }
 
 // Initialize the analyzer when the content script loads
-new LeetCodeAnalyzer();
+const analyzer = new LeetCodeAnalyzer();
+
+// Add message listener for popup communication
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log('Content script received message:', message);
+  
+  if (message.type === 'PING') {
+    sendResponse({ loaded: true });
+    return true;
+  }
+  
+  if (message.type === 'TRIGGER_ANALYSIS') {
+    console.log('Triggering analysis from popup...');
+    
+    // Trigger the analyze action
+    if (message.action === 'analyze') {
+      // Find the analyze button and click it programmatically
+      const analyzeBtn = document.querySelector('.lca-tab-btn[data-tab="analyze"]') as HTMLElement;
+      if (analyzeBtn) {
+        analyzeBtn.click();
+        setTimeout(() => {
+          const analyzeActionBtn = document.querySelector('.lca-action-btn[data-action="analyze"]') as HTMLElement;
+          if (analyzeActionBtn) {
+            analyzeActionBtn.click();
+            sendResponse({ success: true, message: 'Analysis triggered' });
+          } else {
+            sendResponse({ success: false, message: 'Analyze button not found' });
+          }
+        }, 100);
+      } else {
+        sendResponse({ success: false, message: 'Analyzer UI not loaded' });
+      }
+    } else if (message.action === 'complexity') {
+      // Find the complexity button and click it
+      const complexityBtn = document.querySelector('.lca-tab-btn[data-tab="complexity"]') as HTMLElement;
+      if (complexityBtn) {
+        complexityBtn.click();
+        setTimeout(() => {
+          const complexityActionBtn = document.querySelector('.lca-action-btn[data-action="analyze-complexity"]') as HTMLElement;
+          if (complexityActionBtn) {
+            complexityActionBtn.click();
+            sendResponse({ success: true, message: 'Complexity analysis triggered' });
+          } else {
+            sendResponse({ success: false, message: 'Complexity button not found' });
+          }
+        }, 100);
+      } else {
+        sendResponse({ success: false, message: 'Analyzer UI not loaded' });
+      }
+    }
+    
+    return true; // Keep the message channel open for async response
+  }
+  
+  return false;
+});

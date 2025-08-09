@@ -792,6 +792,45 @@
   animation: lca-slide-in 0.3s ease-out;
 }
 
+/* Error Analysis Specific Styles */
+.lca-error-analysis-results {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.lca-analysis-summary {
+  background: #f8fafc;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-left: 4px solid #3b82f6;
+  color: #374151;
+}
+
+.leetcode-analyzer-dropdown[data-theme="dark"] .lca-analysis-summary {
+  background: #111827;
+  color: #f3f4f6;
+}
+
+.lca-error-line {
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 4px;
+  font-family: 'SF Mono', 'Monaco', monospace;
+}
+
+.lca-code-snippet {
+  background: #1f2937;
+  border-radius: 4px;
+  padding: 8px;
+  margin: 8px 0;
+  overflow-x: auto;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-size: 11px;
+  color: #f9fafb;
+  border: 1px solid #374151;
+}
+
 /* Notification Styles */
 .leetcode-analyzer-notification {
   position: fixed;

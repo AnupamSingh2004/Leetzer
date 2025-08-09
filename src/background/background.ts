@@ -18,12 +18,16 @@ class BackgroundService {
   };
 
   constructor() {
+    console.log('Background service initializing...');
     this.setupEventListeners();
     this.initializeExtension();
   }
 
   private setupEventListeners(): void {
+    console.log('Setting up background event listeners...');
+    
     chrome.runtime.onInstalled.addListener((details: chrome.runtime.InstalledDetails) => {
+      console.log('Extension installed/updated:', details.reason);
       if (details.reason === 'install') {
         this.handleFirstInstall();
       } else if (details.reason === 'update') {
@@ -36,13 +40,27 @@ class BackgroundService {
       sender: chrome.runtime.MessageSender,
       sendResponse: (response: ChromeMessageResponse) => void
     ) => {
-      this.handleMessage(message, sender, sendResponse);
-      return true;
+      console.log('Message received in background:', message.type, message);
+      
+      // Handle the message asynchronously
+      this.handleMessage(message, sender, sendResponse)
+        .catch(error => {
+          console.error('Error handling message:', error);
+          sendResponse({ 
+            success: false, 
+            error: error instanceof Error ? error.message : 'Unknown error' 
+          });
+        });
+      
+      return true; // Keep message channel open for async response
     });
 
     chrome.runtime.onStartup.addListener(() => {
+      console.log('Extension startup');
       this.initializeExtension();
     });
+
+    console.log('Background event listeners setup complete');
   }
 
   private async handleFirstInstall(): Promise<void> {
@@ -86,6 +104,8 @@ class BackgroundService {
     sendResponse: (response: ChromeMessageResponse) => void
   ): Promise<void> {
     try {
+      console.log('Handling message:', message.type);
+      
       switch (message.type) {
         case 'GET_API_KEY':
           const apiKey = await this.getApiKey();
@@ -95,6 +115,21 @@ class BackgroundService {
         case 'SET_API_KEY':
           const isValid = await this.setApiKey(message.data);
           sendResponse({ success: isValid, data: isValid });
+          break;
+
+        case 'TEST_API_KEY':
+          console.log('Testing API key in background script...');
+          const testResult = await this.testApiKey(message.data);
+          console.log('Test result:', testResult);
+          sendResponse({ 
+            success: testResult.isValid, 
+            ...(testResult.error && { error: testResult.error })
+          });
+          break;
+
+        case 'PING':
+          console.log('Ping received in background');
+          sendResponse({ success: true, data: 'pong' });
           break;
 
         case 'GET_SETTINGS':
@@ -112,12 +147,14 @@ class BackgroundService {
           break;
 
         default:
+          console.warn('Unknown message type:', message.type);
           sendResponse({ 
             success: false, 
             error: `Unknown message type: ${message.type}` 
           });
       }
     } catch (error) {
+      console.error('Error in handleMessage:', error);
       sendResponse({ 
         success: false, 
         error: error instanceof Error ? error.message : 'Unknown error' 
@@ -162,6 +199,21 @@ class BackgroundService {
     } catch (error) {
       console.error('Failed to set API key:', error);
       return false;
+    }
+  }
+
+  private async testApiKey(apiKey: string): Promise<{ isValid: boolean; error?: string }> {
+    try {
+      console.log('Background: testing API key...');
+      const result = await GeminiClient.testApiKey(apiKey);
+      console.log('Background: test result:', result);
+      return result;
+    } catch (error) {
+      console.error('Background: test error:', error);
+      return { 
+        isValid: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      };
     }
   }
 
@@ -250,4 +302,7 @@ class BackgroundService {
   }
 }
 
-new BackgroundService();
+// Initialize the background service immediately
+console.log('Initializing background service...');
+const backgroundService = new BackgroundService();
+console.log('Background service initialized');

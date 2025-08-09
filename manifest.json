@@ -13,12 +13,13 @@
     "https://generativelanguage.googleapis.com/*"
   ],
   "background": {
-    "service_worker": "dist/background/background.js"
+    "service_worker": "dist/background/background.js",
+    "type": "module"
   },
   "content_scripts": [
     {
       "matches": ["https://leetcode.com/problems/*"],
-      "js": ["dist/utils/helpers.js", "dist/utils/codeParser.js", "dist/utils/geminiClient.js", "dist/content/content.js"],
+      "js": ["dist/content/content-bundled.js"],
       "css": ["dist/content/content.css"],
       "run_at": "document_end"
     }

@@ -15,13 +15,13 @@ import {
  * Handles communication with Google Gemini API
  */
 export class GeminiClient {
-  private static readonly API_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent';
+  private static readonly API_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
   private static readonly MAX_RETRIES = 3;
   private static readonly RETRY_DELAY = 1000; // 1 second
   private static readonly REQUEST_TIMEOUT = 30000; // 30 seconds
   
   private static rateLimitInfo: RateLimitInfo = {
-    requestsPerMinute: 0,
+    requestsPerMinute: 100, // Rate limit for Gemini Flash (free tier)
     currentRequests: 0,
     resetTime: Date.now() + 60000
   };
@@ -268,7 +268,7 @@ export class GeminiClient {
    */
   private static buildAnalysisPrompt(codeInfo: CodeInfo, problemInfo: ProblemInfo): string {
     return `
-You are an expert code reviewer. Analyze the following ${codeInfo.language} code for a LeetCode problem and provide a detailed analysis.
+You are an expert LeetCode problem solver and competitive programming mentor. Analyze the following ${codeInfo.language} code for the LeetCode problem "${problemInfo.title}" and provide a detailed LeetCode-specific analysis.
 
 Problem: ${problemInfo.title}
 Difficulty: ${problemInfo.difficulty}
@@ -279,37 +279,38 @@ Code to analyze:
 ${codeInfo.content}
 \`\`\`
 
-Please provide your analysis in the following JSON format:
+Please provide your analysis in the following JSON format, focusing specifically on LeetCode and DSA aspects:
 {
   "errors": [
     {
-      "type": "syntax|logic|runtime|performance",
+      "type": "syntax|logic|runtime|performance|edge-case",
       "severity": "low|medium|high|critical",
-      "message": "Description of the error",
+      "message": "LeetCode-specific error description",
       "line": line_number_if_applicable,
-      "suggestion": "How to fix this error"
+      "suggestion": "How to fix this for LeetCode constraints"
     }
   ],
   "warnings": [
     {
-      "type": "style|performance|best-practice",
-      "message": "Description of the warning",
+      "type": "performance|edge-case|leetcode-specific|algorithm",
+      "message": "LeetCode/DSA specific warning",
       "line": line_number_if_applicable,
-      "suggestion": "Recommendation"
+      "suggestion": "Recommendation for LeetCode problems"
     }
   ],
   "suggestions": [
-    "General improvement suggestions"
+    "LeetCode-specific improvement suggestions focusing on algorithms, data structures, and competitive programming best practices"
   ],
   "confidence": confidence_score_0_to_1
 }
 
-Focus on:
-1. Syntax errors and potential runtime errors
-2. Logic errors that might cause wrong results
-3. Edge cases that aren't handled
-4. Performance issues
-5. Code style and best practices
+Focus specifically on:
+1. **Algorithm correctness** for this LeetCode problem
+2. **Edge cases** common in competitive programming (empty arrays, single elements, duplicates, negative numbers, etc.)
+3. **Time/Space complexity** issues that would cause TLE or MLE on LeetCode
+4. **LeetCode-specific constraints** and requirements
+5. **Data structure optimization** opportunities
+6. **Competitive programming patterns** and techniques
 
 Respond only with valid JSON.`;
   }
@@ -319,27 +320,33 @@ Respond only with valid JSON.`;
    */
   private static buildSolutionPrompt(problemInfo: ProblemInfo, language: CodeInfo['language']): string {
     return `
-Generate a clean, optimal solution for this LeetCode problem in ${language}.
+You are an expert LeetCode problem solver. Generate an optimal solution for this LeetCode problem in ${language}.
 
 Problem: ${problemInfo.title}
 Difficulty: ${problemInfo.difficulty}
 Description: ${problemInfo.description}
 
 Requirements:
-1. Provide working, executable code
-2. Use optimal time and space complexity
-3. Handle edge cases
-4. Follow language best practices
-5. NO comments or explanations in the code
-6. Return only the main solution function/method
+1. **IMPORTANT**: Provide ONLY the function body code that goes inside the LeetCode function template
+2. **DO NOT** include class definitions, main functions, or complete programs
+3. **DO NOT** include any comments or explanations in the code
+4. Use optimal time and space complexity for LeetCode constraints
+5. Handle all edge cases common in competitive programming
+6. Follow LeetCode's expected function signature style
 
 Please provide your response in the following JSON format:
 {
-  "code": "clean_code_without_comments",
-  "approach": "brief_description_of_algorithm",
+  "code": "only_the_function_body_code_without_function_signature",
+  "approach": "brief_description_of_algorithm_and_data_structures_used",
   "timeComplexity": "O(...)",
-  "spaceComplexity": "O(...)"
+  "spaceComplexity": "O(...)",
+  "keyInsights": "LeetCode-specific insights and competitive programming techniques used"
 }
+
+Example for ${language}:
+- If the problem asks for a function that returns an integer, provide only the logic inside the function
+- Focus on LeetCode's expected input/output format
+- Use efficient algorithms suitable for competitive programming
 
 Respond only with valid JSON.`;
   }
@@ -349,9 +356,10 @@ Respond only with valid JSON.`;
    */
   private static buildComplexityPrompt(codeInfo: CodeInfo, problemInfo: ProblemInfo): string {
     return `
-Analyze the time and space complexity of this ${codeInfo.language} code for the LeetCode problem.
+Analyze the time and space complexity of this ${codeInfo.language} code for the LeetCode problem "${problemInfo.title}". Focus on competitive programming and LeetCode-specific analysis.
 
 Problem: ${problemInfo.title}
+Difficulty: ${problemInfo.difficulty}
 Code:
 \`\`\`${codeInfo.language}
 ${codeInfo.content}
@@ -365,9 +373,18 @@ Please provide detailed complexity analysis in the following JSON format:
     "worst": "O(...)"
   },
   "spaceComplexity": "O(...)",
-  "explanation": "Detailed explanation of how you arrived at these complexities",
-  "comparisonWithOptimal": "How this compares to the optimal solution"
+  "explanation": "Detailed explanation focusing on LeetCode constraints and competitive programming analysis",
+  "leetcodePerformance": "How this performs on LeetCode (will it pass all test cases, cause TLE, etc.)",
+  "comparisonWithOptimal": "How this compares to the optimal solution for this specific LeetCode problem",
+  "scalabilityAnalysis": "How the solution scales with LeetCode's typical input constraints"
 }
+
+Focus on:
+1. **LeetCode-specific performance** (will it pass within time limits?)
+2. **Competitive programming complexity analysis**
+3. **Input constraint analysis** (how it performs with LeetCode's typical ranges)
+4. **Algorithm efficiency** for this specific problem type
+5. **Memory usage** in the context of LeetCode's memory limits
 
 Respond only with valid JSON.`;
   }
@@ -377,33 +394,42 @@ Respond only with valid JSON.`;
    */
   private static buildOptimizationPrompt(codeInfo: CodeInfo, problemInfo: ProblemInfo): string {
     return `
-Analyze this ${codeInfo.language} code and suggest optimizations for the LeetCode problem.
+Analyze this ${codeInfo.language} code for the LeetCode problem "${problemInfo.title}" and suggest LeetCode/DSA-specific optimizations.
 
 Problem: ${problemInfo.title}
+Difficulty: ${problemInfo.difficulty}
 Current Code:
 \`\`\`${codeInfo.language}
 ${codeInfo.content}
 \`\`\`
 
-Please provide optimization suggestions in the following JSON format:
+Please provide optimization suggestions in the following JSON format, focusing on competitive programming and LeetCode-specific improvements:
 {
   "suggestions": [
     {
-      "type": "algorithm|data-structure|implementation",
-      "description": "What to optimize and why",
+      "type": "algorithm|data-structure|implementation|leetcode-pattern",
+      "description": "LeetCode/DSA-specific optimization with competitive programming context",
       "impact": "low|medium|high",
       "before": "current_problematic_code_snippet",
-      "after": "optimized_code_snippet",
-      "complexityImprovement": "improvement_description"
+      "after": "optimized_code_snippet_for_competitive_programming",
+      "complexityImprovement": "specific_complexity_improvement",
+      "leetcodeContext": "why_this_matters_for_leetcode_and_interviews"
     }
-  ]
+  ],
+  "overallOptimizationStrategy": "high-level strategy for optimizing this LeetCode solution",
+  "competitiveProgrammingInsights": "insights specific to competitive programming and algorithm optimization"
 }
 
-Focus on:
-1. Algorithm improvements
-2. Better data structure choices
-3. Code efficiency improvements
-4. Memory usage optimizations
+Focus specifically on:
+1. **Algorithm optimization** (better algorithms, dynamic programming patterns, greedy approaches)
+2. **Data structure improvements** (using more efficient data structures for LeetCode constraints)
+3. **LeetCode patterns** (sliding window, two pointers, divide and conquer, etc.)
+4. **Competitive programming techniques** (bit manipulation, mathematical optimizations)
+5. **Time complexity improvements** (reducing from O(n²) to O(n log n), etc.)
+6. **Space complexity optimizations** (in-place algorithms, constant space solutions)
+7. **Edge case handling** improvements for LeetCode test cases
+
+Provide practical, actionable suggestions that will help pass LeetCode test cases faster and more efficiently.
 
 Respond only with valid JSON.`;
   }
@@ -413,7 +439,22 @@ Respond only with valid JSON.`;
    */
   private static parseAnalysisResponse(responseText: string): AnalysisResult {
     try {
-      const parsed = JSON.parse(responseText);
+      // Try to extract JSON from response if it's wrapped in markdown or extra text
+      let jsonStr = responseText.trim();
+      
+      // Look for JSON block in markdown
+      const jsonMatch = jsonStr.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+      if (jsonMatch && jsonMatch[1]) {
+        jsonStr = jsonMatch[1];
+      } else {
+        // Look for standalone JSON object
+        const objectMatch = jsonStr.match(/\{[\s\S]*\}/);
+        if (objectMatch && objectMatch[0]) {
+          jsonStr = objectMatch[0];
+        }
+      }
+      
+      const parsed = JSON.parse(jsonStr);
       return {
         errors: parsed.errors || [],
         warnings: parsed.warnings || [],
@@ -421,12 +462,31 @@ Respond only with valid JSON.`;
         confidence: parsed.confidence || 0.5
       };
     } catch (error) {
-      // Fallback if JSON parsing fails
+      // Try to extract useful information from plain text
+      const text = responseText.toLowerCase();
+      const suggestions: string[] = [];
+      
+      // Look for common analysis patterns
+      if (text.includes('error') || text.includes('issue')) {
+        suggestions.push('Code may have errors that need attention');
+      }
+      if (text.includes('optimize') || text.includes('improve')) {
+        suggestions.push('Code could be optimized for better performance');
+      }
+      if (text.includes('complexity')) {
+        suggestions.push('Consider the time and space complexity of your solution');
+      }
+      
+      // If no specific patterns found, add the raw response as a suggestion
+      if (suggestions.length === 0) {
+        suggestions.push(`Analysis: ${responseText.substring(0, 200)}...`);
+      }
+      
       return {
         errors: [],
         warnings: [],
-        suggestions: ['Failed to parse analysis response'],
-        confidence: 0
+        suggestions,
+        confidence: 0.3
       };
     }
   }
@@ -436,7 +496,22 @@ Respond only with valid JSON.`;
    */
   private static parseSolutionResponse(responseText: string, language: CodeInfo['language']): SolutionResult {
     try {
-      const parsed = JSON.parse(responseText);
+      // Try to extract JSON from response if it's wrapped in markdown or extra text
+      let jsonStr = responseText.trim();
+      
+      // Look for JSON block in markdown
+      const jsonMatch = jsonStr.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+      if (jsonMatch && jsonMatch[1]) {
+        jsonStr = jsonMatch[1];
+      } else {
+        // Look for standalone JSON object
+        const objectMatch = jsonStr.match(/\{[\s\S]*\}/);
+        if (objectMatch && objectMatch[0]) {
+          jsonStr = objectMatch[0];
+        }
+      }
+      
+      const parsed = JSON.parse(jsonStr);
       return {
         code: parsed.code || '',
         language,
@@ -445,11 +520,22 @@ Respond only with valid JSON.`;
         spaceComplexity: parsed.spaceComplexity || 'O(?)'
       };
     } catch (error) {
-      // Fallback if JSON parsing fails
+      // Try to extract code from markdown code blocks
+      let code = responseText;
+      
+      // Look for code blocks with language specification
+      const codeBlockMatch = responseText.match(new RegExp(`\`\`\`${language}\\s*([\\s\\S]*?)\`\`\``, 'i')) ||
+                            responseText.match(/```\w*\s*([\s\S]*?)```/) ||
+                            responseText.match(/`([^`]+)`/);
+      
+      if (codeBlockMatch && codeBlockMatch[1]) {
+        code = codeBlockMatch[1].trim();
+      }
+      
       return {
-        code: responseText, // Use raw response as code
+        code: code.trim(),
         language,
-        approach: 'Generated solution',
+        approach: 'Generated solution (parsed from text)',
         timeComplexity: 'O(?)',
         spaceComplexity: 'O(?)'
       };
@@ -461,7 +547,22 @@ Respond only with valid JSON.`;
    */
   private static parseComplexityResponse(responseText: string): ComplexityAnalysis {
     try {
-      const parsed = JSON.parse(responseText);
+      // Try to extract JSON from response if it's wrapped in markdown or extra text
+      let jsonStr = responseText.trim();
+      
+      // Look for JSON block in markdown
+      const jsonMatch = jsonStr.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+      if (jsonMatch && jsonMatch[1]) {
+        jsonStr = jsonMatch[1];
+      } else {
+        // Look for standalone JSON object
+        const objectMatch = jsonStr.match(/\{[\s\S]*\}/);
+        if (objectMatch && objectMatch[0]) {
+          jsonStr = objectMatch[0];
+        }
+      }
+      
+      const parsed = JSON.parse(jsonStr);
       return {
         timeComplexity: parsed.timeComplexity || {
           best: 'O(?)',
@@ -473,14 +574,33 @@ Respond only with valid JSON.`;
         comparisonWithOptimal: parsed.comparisonWithOptimal
       };
     } catch (error) {
+      // Try to extract complexity information from plain text
+      const text = responseText.toLowerCase();
+      let timeComplexity = 'O(?)';
+      let spaceComplexity = 'O(?)';
+      
+      // Look for common complexity patterns
+      const timeMatch = text.match(/time.*?complexity.*?o\([^)]+\)/i) || 
+                       text.match(/o\([^)]+\).*?time/i) ||
+                       text.match(/o\([^)]+\)/i);
+      if (timeMatch) {
+        timeComplexity = timeMatch[0].match(/o\([^)]+\)/i)?.[0] || 'O(?)';
+      }
+      
+      const spaceMatch = text.match(/space.*?complexity.*?o\([^)]+\)/i) || 
+                        text.match(/o\([^)]+\).*?space/i);
+      if (spaceMatch) {
+        spaceComplexity = spaceMatch[0].match(/o\([^)]+\)/i)?.[0] || 'O(?)';
+      }
+      
       return {
         timeComplexity: {
-          best: 'O(?)',
-          average: 'O(?)',
-          worst: 'O(?)'
+          best: timeComplexity,
+          average: timeComplexity,
+          worst: timeComplexity
         },
-        spaceComplexity: 'O(?)',
-        explanation: 'Failed to parse complexity analysis'
+        spaceComplexity: spaceComplexity,
+        explanation: `Extracted from response: ${responseText.substring(0, 200)}...`
       };
     }
   }

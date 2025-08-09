@@ -1,4 +1,4 @@
-import { CodeInfo, SupportedLanguage } from '../types/index.js';
+import { CodeInfo, SupportedLanguage, ProblemInfo } from '../types/index.js';
 import { Helpers } from './helpers.js';
 
 /**
@@ -43,63 +43,107 @@ export class CodeParser {
    */
   static extractCodeFromEditor(): string {
     try {
-      // Try Monaco Editor first (most common)
-      const monacoLines = document.querySelectorAll('.monaco-editor .view-line');
-      if (monacoLines.length > 0) {
-        return Array.from(monacoLines)
-          .map(line => line.textContent || '')
-          .join('\n')
-          .trim();
+      console.log('Starting code extraction...');
+
+      // Method 1: Try Monaco Editor (most common in current LeetCode)
+      const monacoEditor = document.querySelector('.monaco-editor');
+      if (monacoEditor) {
+        console.log('Found Monaco editor');
+        
+        // Try different Monaco selector strategies
+        const monacoSelectors = [
+          '.view-lines .view-line',
+          '.monaco-editor .view-lines .view-line',
+          '.view-line span',
+          '.monaco-editor .view-line'
+        ];
+        
+        for (const selector of monacoSelectors) {
+          const lines = document.querySelectorAll(selector);
+          if (lines.length > 0) {
+            const code = Array.from(lines)
+              .map(line => line.textContent || '')
+              .join('\n')
+              .trim();
+            if (code && code.length > 10) {
+              console.log(`Code extracted from Monaco (${selector}):`, code.substring(0, 100) + '...');
+              return code;
+            }
+          }
+        }
       }
 
-      // Try CodeMirror
-      const codeMirrorLines = document.querySelectorAll('.CodeMirror-line');
-      if (codeMirrorLines.length > 0) {
-        return Array.from(codeMirrorLines)
-          .map(line => line.textContent || '')
-          .join('\n')
-          .trim();
+      // Method 2: Try CodeMirror editors and other modern editors
+      const codeEditors = [
+        '.CodeMirror-code .CodeMirror-line',
+        '.cm-content .cm-line', 
+        '.cm-editor .cm-line',
+        'div[data-track-load="code_editor"] .monaco-editor .view-line',
+        'div[class*="monaco"] .view-line',
+        '.monaco-mouse-cursor-text .view-line',
+        // Additional fallbacks
+        '.ace_content .ace_line',
+        'textarea[data-schemapath]',
+        '[data-mode-id] .view-line'
+      ];
+
+      for (const selector of codeEditors) {
+        console.log(`Trying selector: ${selector}`);
+        const elements = document.querySelectorAll(selector);
+        if (elements.length > 0) {
+          let code = '';
+          
+          if (selector.includes('CodeMirror-line')) {
+            code = Array.from(elements).map(line => line.textContent || '').join('\n');
+          } else if (selector.includes('cm-line')) {
+            code = Array.from(elements).map(line => line.textContent || '').join('\n');
+          } else if (selector.includes('view-line')) {
+            code = Array.from(elements).map(line => line.textContent || '').join('\n');
+          } else {
+            const container = elements[0];
+            code = container?.textContent || '';
+          }
+          
+          if (code && code.trim().length > 10) {
+            console.log(`Code extracted from ${selector}:`, code.substring(0, 100) + '...');
+            return code.trim();
+          }
+        }
       }
 
-      // Try newer CodeMirror 6
-      const cm6Content = document.querySelector('.cm-content');
-      if (cm6Content) {
-        return cm6Content.textContent?.trim() || '';
-      }
-
-      // Try ACE Editor
-      const aceLines = document.querySelectorAll('.ace_line');
-      if (aceLines.length > 0) {
-        return Array.from(aceLines)
-          .map(line => line.textContent || '')
-          .join('\n')
-          .trim();
-      }
-
-      // Fallback: try to find any textarea or contenteditable
+      // Method 3: Look for textarea with code
       const textareas = document.querySelectorAll('textarea');
       for (const textarea of Array.from(textareas)) {
         if (textarea.value && textarea.value.trim().length > 10) {
+          console.log('Code extracted from textarea:', textarea.value.substring(0, 100) + '...');
           return textarea.value.trim();
         }
       }
 
-      const editables = document.querySelectorAll('[contenteditable="true"]');
-      for (const editable of Array.from(editables)) {
-        const content = editable.textContent?.trim();
-        if (content && content.length > 10) {
-          return content;
+      // Method 4: Try to find any pre/code elements with substantial content
+      const codeBlocks = document.querySelectorAll('pre, code');
+      for (const block of Array.from(codeBlocks)) {
+        const content = block.textContent || '';
+        if (content.trim().length > 50 && 
+            (content.includes('class') || content.includes('function') || content.includes('def') || content.includes('#include'))) {
+          console.log('Code extracted from code block:', content.substring(0, 100) + '...');
+          return content.trim();
         }
       }
 
+      console.warn('Could not extract code from editor - no suitable elements found');
+      
+      // Debug: Log available elements
+      console.log('Available Monaco editors:', document.querySelectorAll('.monaco-editor').length);
+      console.log('Available view-lines:', document.querySelectorAll('.view-line').length);
+      console.log('Available textareas:', document.querySelectorAll('textarea').length);
+      
       return '';
     } catch (error) {
-      console.error('Failed to extract code from editor:', error);
+      console.error('Error extracting code from editor:', error);
       return '';
     }
-  }
-
-  /**
+  }  /**
    * Detects the programming language being used
    */
   static detectProgrammingLanguage(): SupportedLanguage {
@@ -382,6 +426,315 @@ export class CodeParser {
     }
 
     return observer;
+  }
+
+  /**
+   * Extracts problem information from the LeetCode page
+   */
+  static extractProblemInfo(): ProblemInfo {
+    try {
+      // Extract problem title
+      const title = this.extractProblemTitle();
+      
+      // Extract difficulty
+      const difficulty = this.extractProblemDifficulty();
+      
+      // Extract description
+      const description = this.extractProblemDescription();
+      
+      // Extract tags
+      const tags = this.extractProblemTags();
+      
+      // Extract constraints
+      const constraints = this.extractProblemConstraints();
+      
+      return {
+        title,
+        difficulty,
+        description,
+        tags,
+        constraints
+      };
+    } catch (error) {
+      console.error('Failed to extract problem info:', error);
+      return {
+        title: 'Unknown Problem',
+        difficulty: 'Unknown',
+        description: 'Could not extract problem description from the page.'
+      };
+    }
+  }
+
+  /**
+   * Extracts the problem title from various possible selectors
+   */
+  private static extractProblemTitle(): string {
+    const titleSelectors = [
+      // Modern LeetCode selectors (2024/2025)
+      'h1[data-cy="question-title"]',
+      'div[data-track-load="description_content"] h1',
+      'div[data-track-load="description_content"] h1 a',
+      '.text-title-large',
+      '.text-lg.font-medium',
+      '.mr-2.text-lg.font-medium.text-label-1',
+      '.question-title h1',
+      '.question-content h1',
+      'div.question-title',
+      '[data-cy="question-title"]',
+      'h1.text-title-large',
+      // Fallback selectors
+      'h1',
+      '.css-v3d350',
+      '.question-title'
+    ];
+
+    for (const selector of titleSelectors) {
+      const element = document.querySelector(selector);
+      if (element?.textContent?.trim()) {
+        let title = element.textContent.trim();
+        // Remove problem numbers if present (e.g., "1. Two Sum" -> "Two Sum")
+        title = title.replace(/^\d+\.\s*/, '');
+        if (title.length > 3 && !title.toLowerCase().includes('leetcode')) {
+          console.log(`Found title using selector "${selector}": ${title}`);
+          return title;
+        }
+      }
+    }
+
+    // Fallback: try to extract from page title or URL
+    const pageTitle = document.title;
+    if (pageTitle && !pageTitle.toLowerCase().includes('leetcode')) {
+      const cleanTitle = pageTitle.replace(/\s*-\s*LeetCode.*$/i, '').replace(/^\d+\.\s*/, '').trim();
+      if (cleanTitle.length > 3) {
+        console.log(`Found title from page title: ${cleanTitle}`);
+        return cleanTitle;
+      }
+    }
+
+    // Last resort: extract from URL
+    const urlPath = window.location.pathname;
+    const urlMatch = urlPath.match(/\/problems\/([^\/]+)/);
+    if (urlMatch && urlMatch[1]) {
+      const urlTitle = urlMatch[1]
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+      if (urlTitle.length > 3) {
+        console.log(`Found title from URL: ${urlTitle}`);
+        return urlTitle;
+      }
+    }
+
+    console.warn('Could not extract problem title');
+    return 'Unknown Problem';
+  }
+
+  /**
+   * Extracts the problem difficulty
+   */
+  private static extractProblemDifficulty(): 'Easy' | 'Medium' | 'Hard' | 'Unknown' {
+    const difficultySelectors = [
+      // Modern LeetCode selectors
+      'div[diff]',
+      '[data-degree]',
+      '.text-difficulty-easy',
+      '.text-difficulty-medium', 
+      '.text-difficulty-hard',
+      '.text-olive', // Easy
+      '.text-yellow', // Medium  
+      '.text-pink', // Hard
+      'span[class*="text-green"]', // Easy
+      'span[class*="text-yellow"]', // Medium
+      'span[class*="text-red"]', // Hard
+      'span[class*="difficulty"]',
+      '.question-info .difficulty',
+      // Generic selectors
+      'span:has-text("Easy")',
+      'span:has-text("Medium")',
+      'span:has-text("Hard")'
+    ];
+
+    for (const selector of difficultySelectors) {
+      const element = document.querySelector(selector);
+      if (element) {
+        const text = element.textContent?.toLowerCase().trim();
+        if (text?.includes('easy')) {
+          console.log(`Found difficulty "Easy" using selector: ${selector}`);
+          return 'Easy';
+        }
+        if (text?.includes('medium')) {
+          console.log(`Found difficulty "Medium" using selector: ${selector}`);
+          return 'Medium';
+        }
+        if (text?.includes('hard')) {
+          console.log(`Found difficulty "Hard" using selector: ${selector}`);
+          return 'Hard';
+        }
+        
+        // Check for data attributes
+        const diffAttr = element.getAttribute('diff') || element.getAttribute('data-degree');
+        if (diffAttr) {
+          const diffValue = diffAttr.toLowerCase();
+          if (diffValue.includes('easy')) return 'Easy';
+          if (diffValue.includes('medium')) return 'Medium';
+          if (diffValue.includes('hard')) return 'Hard';
+        }
+      }
+    }
+
+    // Try to find difficulty by searching all text content
+    const allSpans = document.querySelectorAll('span, div');
+    for (const element of Array.from(allSpans)) {
+      const text = element.textContent?.toLowerCase().trim();
+      if (text === 'easy') {
+        console.log('Found difficulty "Easy" by text search');
+        return 'Easy';
+      }
+      if (text === 'medium') {
+        console.log('Found difficulty "Medium" by text search');
+        return 'Medium';
+      }
+      if (text === 'hard') {
+        console.log('Found difficulty "Hard" by text search');
+        return 'Hard';
+      }
+    }
+
+    // Try to find difficulty by color classes (LeetCode uses specific colors)
+    const colorElements = document.querySelectorAll('[class*="text-"], [class*="difficulty-"], [class*="color-"]');
+    for (const element of Array.from(colorElements)) {
+      const className = element.className.toLowerCase();
+      if (className.includes('green') || className.includes('olive')) {
+        console.log('Found difficulty "Easy" by color class');
+        return 'Easy';
+      }
+      if (className.includes('yellow') || className.includes('orange')) {
+        console.log('Found difficulty "Medium" by color class');
+        return 'Medium';
+      }
+      if (className.includes('red') || className.includes('pink')) {
+        console.log('Found difficulty "Hard" by color class');
+        return 'Hard';
+      }
+    }
+
+    console.warn('Could not extract problem difficulty');
+    return 'Unknown';
+  }
+
+  /**
+   * Extracts the problem description
+   */
+  private static extractProblemDescription(): string {
+    const descriptionSelectors = [
+      // Modern LeetCode selectors
+      'div[data-track-load="description_content"]',
+      'div[data-track-load="description_content"] > div',
+      'div[data-track-load="description_content"] p',
+      '.xFUwe', // Common LeetCode description class
+      '.elfjS', // Another description class
+      '.content__u3I1 .question-content',
+      '.question-description',
+      '.content .question-content',
+      '[data-cy="question-detail-main-tabs"] div[role="tabpanel"]',
+      '.description__24sA',
+      '.question-detail-main-tabs div',
+      // Generic fallbacks
+      '.question-content',
+      '.description'
+    ];
+
+    for (const selector of descriptionSelectors) {
+      const element = document.querySelector(selector);
+      if (element) {
+        // Get text content but preserve some structure
+        let description = element.textContent?.trim();
+        if (description && description.length > 50) {
+          // Clean up common artifacts
+          description = description
+            .replace(/\s+/g, ' ')
+            .replace(/Example \d+:/g, '\n\nExample:')
+            .replace(/Input:/g, '\nInput:')
+            .replace(/Output:/g, '\nOutput:')
+            .replace(/Explanation:/g, '\nExplanation:')
+            .replace(/Constraints?:/g, '\n\nConstraints:')
+            .replace(/Follow up:/g, '\n\nFollow up:')
+            .trim();
+          
+          // Limit length to avoid too much content
+          if (description.length > 1500) {
+            description = description.substring(0, 1500) + '...';
+          }
+          
+          console.log(`Found description using selector "${selector}": ${description.substring(0, 100)}...`);
+          return description;
+        }
+      }
+    }
+
+    // Try to find the first substantial paragraph
+    const paragraphs = document.querySelectorAll('p');
+    for (const p of Array.from(paragraphs)) {
+      const text = p.textContent?.trim();
+      if (text && text.length > 100 && !text.includes('LeetCode') && !text.includes('Example')) {
+        console.log('Found description from paragraph');
+        return text.length > 1000 ? text.substring(0, 1000) + '...' : text;
+      }
+    }
+
+    console.warn('Could not extract problem description');
+    return 'Problem description not available on this page.';
+  }
+
+  /**
+   * Extracts problem tags
+   */
+  private static extractProblemTags(): string[] {
+    const tagSelectors = [
+      '.topic-tag',
+      '[data-cy="topic-tags"] a',
+      '.tag',
+      '.question-detail-main-tabs .tag',
+      '.topic-tags a'
+    ];
+
+    const tags: string[] = [];
+    
+    for (const selector of tagSelectors) {
+      const elements = document.querySelectorAll(selector);
+      for (const element of Array.from(elements)) {
+        const tagText = element.textContent?.trim();
+        if (tagText && tagText.length > 1 && !tags.includes(tagText)) {
+          tags.push(tagText);
+        }
+      }
+    }
+
+    return tags.slice(0, 10); // Limit to first 10 tags
+  }
+
+  /**
+   * Extracts problem constraints
+   */
+  private static extractProblemConstraints(): string {
+    // Look for constraints section in the description
+    const descriptionElement = document.querySelector('div[data-track-load="description_content"]') || 
+                             document.querySelector('.question-content');
+    
+    if (descriptionElement) {
+      const text = descriptionElement.textContent || '';
+      
+      // Find constraints section
+      const constraintsMatch = text.match(/Constraints?:\s*([^]*?)(?:Follow up|Example|Note|$)/i);
+      if (constraintsMatch && constraintsMatch[1]) {
+        return constraintsMatch[1].trim()
+          .replace(/\s+/g, ' ')
+          .replace(/\n\s*\n/g, '\n')
+          .substring(0, 500); // Limit length
+      }
+    }
+
+    return 'No constraints information available.';
   }
 
   /**

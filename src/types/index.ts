@@ -45,15 +45,17 @@ export interface AnalysisResult {
   warnings: Warning[];
   suggestions: string[];
   confidence: number;
+  summary?: string;
 }
 
 export interface ErrorAnalysis {
-  type: 'syntax' | 'logic' | 'runtime' | 'performance';
+  type: 'syntax' | 'logic' | 'runtime' | 'performance' | 'edge-case';
   severity: 'low' | 'medium' | 'high' | 'critical';
   message: string;
   line?: number;
   column?: number;
   suggestion?: string;
+  code_snippet?: string;
 }
 
 export interface Warning {
@@ -98,7 +100,7 @@ export interface GeminiRequest {
     problemInfo: ProblemInfo;
     codeInfo: CodeInfo;
   };
-  type: 'analyze' | 'solution' | 'complexity' | 'optimize';
+  type: 'analyze' | 'solution' | 'complexity' | 'optimize' | 'error_detection';
 }
 
 export interface GeminiResponse {

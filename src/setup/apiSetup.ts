@@ -1,7 +1,5 @@
 /// <reference types="../types/chrome"/>
 
-import { ExtensionSettings } from '../types/index.js';
-
 /**
  * API Setup page script
  */
@@ -59,15 +57,29 @@ class ApiSetupManager {
    * Sets up event listeners
    */
   private setupEventListeners(): void {
+    console.log('Setting up event listeners...');
+    
     // API key input
-    this.apiKeyInput?.addEventListener('input', () => {
-      this.onApiKeyChange();
-    });
+    if (this.apiKeyInput) {
+      console.log('API key input found, adding listeners');
+      this.apiKeyInput.addEventListener('input', () => {
+        console.log('Input event triggered');
+        this.onApiKeyChange();
+      });
 
-    this.apiKeyInput?.addEventListener('paste', () => {
-      // Small delay to allow paste to complete
-      setTimeout(() => this.onApiKeyChange(), 10);
-    });
+      this.apiKeyInput.addEventListener('paste', () => {
+        console.log('Paste event triggered');
+        // Small delay to allow paste to complete
+        setTimeout(() => this.onApiKeyChange(), 10);
+      });
+
+      this.apiKeyInput.addEventListener('keyup', () => {
+        console.log('Keyup event triggered');
+        this.onApiKeyChange();
+      });
+    } else {
+      console.error('API key input not found!');
+    }
 
     // Toggle visibility
     this.toggleVisibilityBtn?.addEventListener('click', () => {
@@ -75,13 +87,25 @@ class ApiSetupManager {
     });
 
     // Buttons
-    this.testBtn?.addEventListener('click', () => {
-      this.testApiKey();
-    });
+    if (this.testBtn) {
+      console.log('Test button found, adding listener');
+      this.testBtn.addEventListener('click', () => {
+        console.log('Test button clicked');
+        this.testApiKey();
+      });
+    } else {
+      console.error('Test button not found!');
+    }
 
-    this.saveBtn?.addEventListener('click', () => {
-      this.saveApiKey();
-    });
+    if (this.saveBtn) {
+      console.log('Save button found, adding listener');
+      this.saveBtn.addEventListener('click', () => {
+        console.log('Save button clicked');
+        this.saveApiKey();
+      });
+    } else {
+      console.error('Save button not found!');
+    }
 
     // Settings
     document.getElementById('save-settings')?.addEventListener('click', () => {
@@ -103,6 +127,8 @@ class ApiSetupManager {
       e.preventDefault();
       this.openFeedback();
     });
+
+    console.log('Event listeners setup complete');
   }
 
   /**
@@ -112,12 +138,20 @@ class ApiSetupManager {
     const apiKey = this.apiKeyInput?.value.trim() || '';
     const isValid = this.isValidApiKeyFormat(apiKey);
 
+    console.log('API key changed:', { 
+      length: apiKey.length, 
+      isValid, 
+      prefix: apiKey.substring(0, 4) 
+    });
+
     // Update button states
     if (this.testBtn) {
       (this.testBtn as HTMLButtonElement).disabled = !isValid;
+      console.log('Test button disabled:', !isValid);
     }
     if (this.saveBtn) {
       (this.saveBtn as HTMLButtonElement).disabled = !isValid;
+      console.log('Save button disabled:', !isValid);
     }
 
     // Update input styling
@@ -136,7 +170,15 @@ class ApiSetupManager {
    * Validates API key format
    */
   private isValidApiKeyFormat(apiKey: string): boolean {
-    return apiKey.startsWith('AIza') && apiKey.length === 39;
+    // Gemini API keys can start with different prefixes and have varying lengths
+    // Common formats: AIzaXXX, AIzaSyXXX, etc.
+    // Length is typically between 35-45 characters
+    return (
+      apiKey.length >= 20 && 
+      apiKey.length <= 100 && 
+      /^[A-Za-z0-9_-]+$/.test(apiKey) &&
+      (apiKey.startsWith('AIza') || apiKey.startsWith('ya29') || apiKey.length >= 35)
+    );
   }
 
   /**
@@ -164,23 +206,47 @@ class ApiSetupManager {
     }
 
     try {
+      console.log('Starting API key test...');
       this.setButtonLoading(this.testBtn, true);
       this.hideValidationResult();
 
-      const response = await chrome.runtime.sendMessage({
+      // Skip ping test for now and go directly to API test
+      console.log('Skipping ping test, testing API key directly...');
+
+      // Test the API key with a timeout
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('API test timed out after 20 seconds')), 20000);
+      });
+
+      const testPromise = chrome.runtime.sendMessage({
         type: 'TEST_API_KEY',
         data: apiKey
       });
 
-      if (response.success) {
+      const response = await Promise.race([testPromise, timeoutPromise]);
+      console.log('API test response received:', response);
+
+      if (response && response.success) {
         this.showValidationResult('✅ API key is valid and working!', 'success');
         this.updateStatus('connected', 'Connected');
       } else {
-        this.showValidationResult(`❌ ${response.error || 'API key validation failed'}`, 'error');
+        const errorMessage = response?.error || 'API key validation failed';
+        this.showValidationResult(`❌ ${errorMessage}`, 'error');
         this.updateStatus('disconnected', 'Invalid API key');
       }
     } catch (error) {
-      this.showValidationResult('❌ Failed to test API key', 'error');
+      console.error('Test API key error:', error);
+      if (error instanceof Error && error.message.includes('timed out')) {
+        this.showValidationResult('❌ Test request timed out. Please check your internet connection and try again.', 'error');
+      } else if (error instanceof Error && error.message.includes('Extension context invalidated')) {
+        this.showValidationResult('❌ Extension was reloaded. Please refresh this page and try again.', 'error');
+      } else if (error instanceof Error && error.message.includes('Could not establish connection')) {
+        this.showValidationResult('❌ Could not connect to extension background. Please reload the extension.', 'error');
+      } else if (error instanceof Error && error.message.includes('Receiving end does not exist')) {
+        this.showValidationResult('❌ Extension background script not loaded. Please reload the extension.', 'error');
+      } else {
+        this.showValidationResult('❌ Failed to test API key. Please reload the extension and try again.', 'error');
+      }
       this.updateStatus('disconnected', 'Connection failed');
     } finally {
       this.setButtonLoading(this.testBtn, false);
@@ -235,8 +301,8 @@ class ApiSetupManager {
    */
   private async saveSettings(): Promise<void> {
     try {
-      const settings: Partial<ExtensionSettings> = {
-        theme: (this.settingsElements.theme as HTMLSelectElement).value as ExtensionSettings['theme'],
+      const settings = {
+        theme: (this.settingsElements.theme as HTMLSelectElement).value,
         autoAnalyze: (this.settingsElements.autoAnalyze as HTMLInputElement).checked,
         showNotifications: (this.settingsElements.showNotifications as HTMLInputElement).checked,
         analysisDelay: parseInt((this.settingsElements.analysisDelay as HTMLSelectElement).value)
@@ -265,7 +331,7 @@ class ApiSetupManager {
       const response = await chrome.runtime.sendMessage({ type: 'GET_SETTINGS' });
       
       if (response.success && response.data) {
-        const settings = response.data as ExtensionSettings;
+        const settings = response.data;
         
         if (this.settingsElements.theme) {
           (this.settingsElements.theme as HTMLSelectElement).value = settings.theme || 'auto';

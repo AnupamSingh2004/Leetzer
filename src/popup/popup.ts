@@ -43,16 +43,20 @@ class PopupManager {
    */
   private setupEventListeners(): void {
     // Quick action buttons
-    document.getElementById('open-current-page')?.addEventListener('click', () => {
-      this.openCurrentPage();
+    document.getElementById('analyze-current')?.addEventListener('click', () => {
+      this.analyzeCurrentCode();
+    });
+
+    document.getElementById('check-complexity')?.addEventListener('click', () => {
+      this.checkTimeComplexity();
+    });
+
+    document.getElementById('find-errors')?.addEventListener('click', () => {
+      this.findCodeErrors();
     });
 
     document.getElementById('open-settings')?.addEventListener('click', () => {
       this.openSettings();
-    });
-
-    document.getElementById('view-help')?.addEventListener('click', () => {
-      this.openHelp();
     });
 
     // Footer links
@@ -240,6 +244,263 @@ class PopupManager {
     chrome.tabs.create({ 
       url: 'https://github.com/your-username/leetcode-analyzer/blob/main/PRIVACY.md' // Replace with actual privacy URL
     });
+  }
+
+  /**
+   * Analyzes current code on LeetCode page
+   */
+  private async analyzeCurrentCode(): Promise<void> {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      
+      console.log('Current tab URL:', tab?.url);
+      
+      if (!tab?.url?.includes('leetcode.com/problems/')) {
+        this.showNotification('Please navigate to a LeetCode problem page first');
+        return;
+      }
+
+      if (!tab.id) {
+        this.showNotification('Unable to access current tab');
+        return;
+      }
+
+      console.log('Sending TRIGGER_ANALYSIS message to tab:', tab.id);
+
+      // First, try to ping the existing content script
+      let contentScriptLoaded = false;
+      try {
+        const pingResponse = await chrome.tabs.sendMessage(tab.id, { type: 'PING' });
+        if (pingResponse && pingResponse.loaded) {
+          contentScriptLoaded = true;
+          console.log('Content script already loaded and responsive');
+        }
+      } catch (pingError) {
+        console.log('Content script not responding to ping:', pingError);
+      }
+
+      if (contentScriptLoaded) {
+        // Content script is loaded, send analysis trigger
+        try {
+          const response = await chrome.tabs.sendMessage(tab.id, { 
+            type: 'TRIGGER_ANALYSIS',
+            action: 'analyze'
+          });
+          
+          console.log('Response from content script:', response);
+          this.showNotification('Code analysis started!');
+          window.close();
+          return;
+        } catch (messageError) {
+          console.log('Failed to trigger analysis despite ping success:', messageError);
+        }
+      }
+
+      // If we reach here, content script needs to be injected
+      console.log('Injecting content script manually...');
+      
+      try {
+        // First try to send message to existing content script
+        const response = await chrome.tabs.sendMessage(tab.id, { 
+          type: 'TRIGGER_ANALYSIS',
+          action: 'analyze'
+        });
+        
+        console.log('Response from content script:', response);
+        this.showNotification('Code analysis started!');
+        window.close();
+      } catch (messageError) {
+        console.log('Content script not loaded, injecting it manually...', messageError);
+        
+        try {
+          // If content script not loaded, inject it manually
+          await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ['dist/content/content-bundled.js']
+          });
+
+          // Also inject CSS
+          await chrome.scripting.insertCSS({
+            target: { tabId: tab.id },
+            files: ['dist/content/content.css']
+          });
+
+          console.log('Scripts injected successfully, waiting...');
+
+          // Wait longer for scripts to load and initialize
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          console.log('Attempting to send message after injection...');
+
+          // Try sending message again
+          const response = await chrome.tabs.sendMessage(tab.id, { 
+            type: 'TRIGGER_ANALYSIS',
+            action: 'analyze'
+          });
+          
+          console.log('Response after manual injection:', response);
+          this.showNotification('Code analysis started!');
+          window.close();
+        } catch (injectionError) {
+          console.error('Script injection failed:', injectionError);
+          this.showNotification('Failed to load extension on this page. Please refresh the page and try again.');
+        }
+      }
+    } catch (error) {
+      console.error('Error in analyzeCurrentCode:', error);
+      if (error instanceof Error && error.message.includes('Could not establish connection')) {
+        this.showNotification('Unable to connect to page. Please refresh and try again.');
+      } else if (error instanceof Error && error.message.includes('Receiving end does not exist')) {
+        this.showNotification('Page communication failed. Please refresh and try again.');
+      } else {
+        this.showNotification('Failed to analyze code. Please refresh the page and try again.');
+      }
+    }
+  }
+
+  /**
+   * Checks time complexity of current code
+   */
+  private async checkTimeComplexity(): Promise<void> {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      
+      if (!tab?.url?.includes('leetcode.com/problems/')) {
+        this.showNotification('Please navigate to a LeetCode problem page first');
+        return;
+      }
+
+      if (!tab.id) {
+        this.showNotification('Unable to access current tab');
+        return;
+      }
+
+      try {
+        // First try to send message to existing content script
+        const response = await chrome.tabs.sendMessage(tab.id, { 
+          type: 'TRIGGER_ANALYSIS',
+          action: 'complexity'
+        });
+        
+        this.showNotification('Time complexity analysis started!');
+        window.close();
+      } catch (messageError) {
+        console.log('Content script not loaded for complexity check, injecting it manually...', messageError);
+        
+        try {
+          // If content script not loaded, inject it manually
+          await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ['dist/content/content-bundled.js']
+          });
+
+          await chrome.scripting.insertCSS({
+            target: { tabId: tab.id },
+            files: ['dist/content/content.css']
+          });
+
+          console.log('Scripts injected for complexity check, waiting...');
+          
+          // Wait longer for scripts to load and initialize
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          const response = await chrome.tabs.sendMessage(tab.id, { 
+            type: 'TRIGGER_ANALYSIS',
+            action: 'complexity'
+          });
+          
+          this.showNotification('Time complexity analysis started!');
+          window.close();
+        } catch (injectionError) {
+          console.error('Script injection failed for complexity check:', injectionError);
+          this.showNotification('Failed to load extension on this page. Please refresh the page and try again.');
+        }
+      }
+    } catch (error) {
+      console.error('Error in checkTimeComplexity:', error);
+      this.showNotification('Failed to analyze complexity. Please refresh the page and try again.');
+    }
+  }
+
+  /**
+   * Finds errors in current code
+   */
+  private async findCodeErrors(): Promise<void> {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      
+      if (!tab?.url?.includes('leetcode.com/problems/')) {
+        this.showNotification('Please navigate to a LeetCode problem page first');
+        return;
+      }
+
+      if (!tab.id) {
+        this.showNotification('Unable to access current tab');
+        return;
+      }
+
+      try {
+        // First try to send message to existing content script
+        const response = await chrome.tabs.sendMessage(tab.id, { 
+          type: 'TRIGGER_ANALYSIS',
+          action: 'errors'
+        });
+        
+        this.showNotification('Error detection started!');
+        window.close();
+      } catch (messageError) {
+        console.log('Content script not loaded for error detection, injecting it manually...', messageError);
+        
+        try {
+          // If content script not loaded, inject it manually
+          await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ['dist/content/content-bundled.js']
+          });
+
+          await chrome.scripting.insertCSS({
+            target: { tabId: tab.id },
+            files: ['dist/content/content.css']
+          });
+
+          console.log('Scripts injected for error detection, waiting...');
+          
+          // Wait longer for scripts to load and initialize
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          const response = await chrome.tabs.sendMessage(tab.id, { 
+            type: 'TRIGGER_ANALYSIS',
+            action: 'errors'
+          });
+          
+          this.showNotification('Error detection started!');
+          window.close();
+        } catch (injectionError) {
+          console.error('Script injection failed for error detection:', injectionError);
+          this.showNotification('Failed to load extension on this page. Please refresh the page and try again.');
+        }
+      }
+    } catch (error) {
+      console.error('Error in findCodeErrors:', error);
+      this.showNotification('Failed to detect errors. Please refresh the page and try again.');
+    }
+  }
+
+  /**
+   * Shows a notification to the user
+   */
+  private showNotification(message: string): void {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = 'popup-notification';
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+      notification.remove();
+    }, 3000);
   }
 
   /**
